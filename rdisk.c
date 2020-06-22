@@ -21,9 +21,9 @@ OSErr RDiskAddDrive(short drvrRefNum, short drvNum, DrvQElPtr dq) = {0x4840, 0x3
 inline char IsRPressed() { return *((char*)0x175) & 0x80; }
 inline char ISAPressed() { return *((char*)0x174) & 0x01; }
 
-#define RDiskCopySize (128)
+#define Copy24Size (64)
 typedef void (*ROMDiskCopy_t)(char *, char *, unsigned long);
-void RDiskCopy(char *source, char *dest, unsigned long count) {
+void Copy24(char *source, char *dest, unsigned long count) {
 	char mode = true32b;
 	SwapMMUMode(&mode);
 	BlockMove(source, dest, count);
@@ -58,7 +58,7 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	if (!d->dCtlStorage) { return openErr; }
 
 	// Allocate space for 24-bit copy routine in system heap and move it there
-	c->copy24_alloc = NewPtrSys(RDiskCopySize);
+	c->copy24_alloc = NewPtrSys(Copy24Size);
 	if (!c->copy24_alloc) {
 		if (d->dCtlStorage) {
 			HUnlock(d->dCtlStorage);
@@ -66,7 +66,7 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 		}
 		return openErr;
 	}
-	BlockMove(&RDiskCopy, c->copy24_alloc, RDiskCopySize);
+	BlockMove(&Copy24, c->copy24_alloc, Copy24Size);
 	c->copy24 = (ROMDiskCopy_t)StripAddress(c->copy24_alloc);
 
 	// Lock our storage struct and get master pointer
@@ -91,7 +91,7 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	return noErr;
 }
 
-OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
+static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	char startup, ram;
 
 	// Return if initialized. Otherwise mark init done
@@ -221,7 +221,7 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	//FIXME: Should we fail if cmd isn't read or write?
 }
 
-OSErr RDiskAccRun(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
+static OSErr RDiskAccRun(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Disable accRun
 	d->dCtlDelay = 0;
 	d->dCtlFlags &= ~dNeedTimeMask;
