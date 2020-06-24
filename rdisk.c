@@ -191,6 +191,7 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 		case fsFromMark: offset = d->dCtlPosition + p->ioPosOffset; break;
 		default: offset = 0; break; //FIXME: Error if unsupported ioPosMode?
 	}
+	disk += offset;
 	//  Bounds checking
 	/*if (offset >= RDiskSize || p->ioReqCount >= RDiskSize || 
 		offset + p->ioReqCount >= RDiskSize || 
