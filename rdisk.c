@@ -6,8 +6,8 @@
 #include <Events.h>
 #include <OSUtils.h>
 
-#define RDiskSize (0x00780000L)
 #include "rdtraps.h"
+#define RDiskSize (0x00180000L)
 #define RDiskBuf ((char*)0x40880000)
 #define BufPtr ((Ptr*)0x10C)
 #define MemTop ((Ptr*)0x108)
