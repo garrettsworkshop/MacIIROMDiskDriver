@@ -11,12 +11,20 @@
 // This function is here just to put padding at the
 // beginning of the output file
 void GWROMDisk() {
-	StripAddress(&GWROMDisk);
-	StripAddress(&GWROMDisk);
-	StripAddress(&GWROMDisk);
-	StripAddress(&GWROMDisk);
-	StripAddress(&GWROMDisk);
-	StripAddress(&GWROMDisk);
+	__asm__ __volatile__
+	(
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t"
+		".long  0x00000000\n\t":::);
 }
 
 #define RDiskSize (0x00180000L)
