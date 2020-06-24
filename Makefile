@@ -19,7 +19,7 @@ obj/rdisk.o: rdisk.c obj
 	$(CC) -c -O1 $< -o $@
 
 obj/rdisk_reloc.o: obj obj/rdisk.o
-	$(LD) -Ttext=40851DB0 -o $@ obj/rdisk.o
+	$(LD) -Ttext=40851D70 -o $@ obj/rdisk.o
 
 obj/rdisk.s: obj obj/rdisk.o
 	$(OBJDUMP) -d obj/rdisk.o > $@
