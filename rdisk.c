@@ -25,9 +25,11 @@ void GWROMDisk() {
 #define MemTop ((Ptr*)0x108)
 #define MMU32bit ((char*)0x0CB2)
 
-#define Copy24Size (64)
 typedef void (*ROMDiskCopy_t)(char *, char *, unsigned long);
-void Copy24(char *source, char *dest, unsigned long count) {
+
+// Switch to 24-bit mode and copy. Call this with
+// PC==0x408XXXXX, not PC==0x008XXXXX
+void RDiskCopy24(char *source, char *dest, unsigned long count) {
 	char mode = true32b;
 	SwapMMUMode(&mode);
 	BlockMove(source, dest, count);
@@ -36,9 +38,7 @@ void Copy24(char *source, char *dest, unsigned long count) {
 
 typedef struct RDiskStorage_s {
 	DrvSts2 drvsts;
-	ROMDiskCopy_t copy24;
 	char init_done;
-	Ptr copy24_alloc;
 	char *ramdisk;
 	Ptr ramdisk_alloc;
 	char ramdisk_valid;
@@ -65,18 +65,6 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	// Allocate storage struct
 	d->dCtlStorage = NewHandleSysClear(sizeof(RDiskStorage_t));
 	if (!d->dCtlStorage) { return openErr; }
-
-	// Allocate space for 24-bit copy routine in system heap and move it there
-	c->copy24_alloc = NewPtrSys(Copy24Size);
-	if (!c->copy24_alloc) {
-		if (d->dCtlStorage) {
-			HUnlock(d->dCtlStorage);
-			DisposeHandle(d->dCtlStorage);
-		}
-		return openErr;
-	}
-	BlockMove(&Copy24, c->copy24_alloc, Copy24Size);
-	c->copy24 = (ROMDiskCopy_t)StripAddress(c->copy24_alloc);
 
 	// Lock our storage struct and get master pointer
 	HLock(d->dCtlStorage);
@@ -153,8 +141,6 @@ static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		if (dq->dQRefNum == d->dCtlRefNum) {
 			Dequeue((QElemPtr)dq, QHead);
 			if (c->ramdisk_alloc) { DisposePtr(c->ramdisk_alloc); }
-			if (c->copy24_alloc) { DisposePtr(c->copy24_alloc); }
-			HUnlock(d->dCtlStorage);
 			DisposeHandle(d->dCtlStorage);
 		}
 		d->dCtlStorage = NULL;
@@ -170,6 +156,8 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	char cmd;
 	char *disk;
 	unsigned long offset;
+	ROMDiskCopy_t copy24 = RDiskCopy24;
+
 
 	// Return disk offline error if dCtlStorage null
 	if (!d->dCtlStorage) { return offLinErr; }
@@ -208,7 +196,7 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 		if (*MMU32bit) { BlockMove(disk, (char*)p->ioBuffer, p->ioReqCount); }
 		else { // 24-bit addressing
 			char *buffer = (char*)Translate24To32(StripAddress(p->ioBuffer));
-			c->copy24(disk, buffer, p->ioReqCount);
+			copy24(disk, buffer, p->ioReqCount);
 		}
 		// Update count
 		p->ioActCount = p->ioReqCount;
@@ -221,7 +209,7 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 		if (*MMU32bit) { BlockMove((char*)p->ioBuffer, disk, p->ioReqCount); }
 		else { // 24-bit addressing
 			char *buffer = (char*)Translate24To32(StripAddress(p->ioBuffer));
-			c->copy24(buffer, disk, p->ioReqCount);
+			copy24(buffer, disk, p->ioReqCount);
 		}
 		// Update count and position/offset
 		p->ioActCount = p->ioReqCount;
@@ -261,9 +249,10 @@ static OSErr RDiskAccRun(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		// Mark write protected if we couldn't allocate RAM buffer?
 		c->drvsts.writeProt = -1;
 	} else if (c->ramdisk && !c->ramdisk_valid) { // Else if buffer exists but is not valid,
+		ROMDiskCopy_t copy24 = RDiskCopy24;
 		// Copy ROM disk to RAM disk buffer if not yet copied
 		if (*MMU32bit) { BlockMove(RDiskBuf, c->ramdisk, RDiskSize); }
-		else { c->copy24(RDiskBuf, c->ramdisk, RDiskSize); }
+		else { copy24(RDiskBuf, c->ramdisk, RDiskSize); }
 		c->ramdisk_valid = 1;
 	}
 
@@ -306,7 +295,6 @@ OSErr RDiskClose(IOParamPtr p, DCtlPtr d) {
 	if (d->dCtlStorage) {
 		RDiskStorage_t *c = *(RDiskStorage_t**)d->dCtlStorage;
 		if (c->ramdisk_alloc) { DisposePtr(c->ramdisk_alloc); }
-		if (c->copy24_alloc) { DisposePtr(c->copy24_alloc); }
 		HUnlock(d->dCtlStorage);
 		DisposeHandle(d->dCtlStorage);
 	}
