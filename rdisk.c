@@ -92,7 +92,7 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 					dNeedLockMask; // 0x4F */
 
 	// Add drive to drive queue and return
-	RDAddDrive(status->dQRefNum, drvNum, (DrvQElPtr)&status->qLink);
+	RDiskAddDrive(status->dQRefNum, drvNum, (DrvQElPtr)&status->qLink);
 	return noErr;
 }
 
@@ -103,11 +103,11 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	c->init_done = 1;
 
 	// Read PRAM
-	/*RDReadXPRam(1, 4, &startup);
-	RDReadXPRam(1, 5, &ram);*/
+	/*RDiskReadXPRam(1, 4, &startup);
+	RDiskReadXPRam(1, 5, &ram);*/
 
 	// Either enable ROM disk or remove ourselves from the drive queue
-	/*if (startup || RDIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,*/
+	/*if (startup || RDiskIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,*/
 		// Set ROM disk attributes
 		c->drvsts.writeProt = -1; // Set write protected
 		// Clear disk fields (even though we used NewHandleSysClear)
@@ -115,7 +115,7 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		c->ramdisk_alloc = NULL;
 		c->ramdisk_valid = 0;
 		// If RAM disk set in PRAM or A pressed, enable RAM disk
-		/*if (ram || RDISAPressed()) { 
+		/*if (ram || RDiskISAPressed()) { 
 			unsigned long minBufPtr, newBufPtr;
 			// Clearing write protect marks RAM disk enabled
 			c->drvsts.writeProt = 0;
@@ -165,7 +165,6 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	char *disk;
 	unsigned long offset;
 	ROMDiskCopy_t copy24 = RDiskCopy24;
-
 
 	// Return disk offline error if dCtlStorage null
 	if (!d->dCtlStorage) { return offLinErr; }
