@@ -47,7 +47,8 @@ typedef struct RDiskStorage_s {
 #pragma parameter __D0 RDiskOpen(__A0, __A1)
 OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	DrvQElPtr dq;
-	int drvnum = 1;
+	DrvSts2 *status;
+	int drvNum;
 	RDiskStorage_t *c;
 
 	// Do nothing if already opened
@@ -58,8 +59,9 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	StripAddress(&GWROMDisk);
 	
 	// Figure out first available drive number
+	drvNum = 1;
 	for (dq = (DrvQElPtr)(GetDrvQHdr())->qHead; dq; dq = (DrvQElPtr)dq->qLink) {
-		if (dq->dQDrive >= drvnum) { drvnum = dq->dQDrive + 1; }
+		if (dq->dQDrive >= drvNum) { drvNum = dq->dQDrive + 1; }
 	}
 	
 	// Allocate storage struct
@@ -70,30 +72,35 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	HLock(d->dCtlStorage);
 	c = *(RDiskStorage_t**)d->dCtlStorage;
 
-	// Set drive status
-	c->drvsts.writeProt = -1;
-	c->drvsts.diskInPlace = 0x08;
-	c->drvsts.dQDrive = drvnum;
-	c->drvsts.dQRefNum = d->dCtlRefNum;
-	c->drvsts.driveSize = (RDiskSize >> 9) & 0xFFFF;
-	c->drvsts.driveS1 = ((RDiskSize >> 9) & 0xFFFF0000) >> 16;
+	// Initialize storage struct fields
+	c->init_done = 0;
+	c->ramdisk = NULL;
+	c->ramdisk_alloc = NULL;
+	c->ramdisk_valid = 0;
 
-	//FIXME: Set driver flags?
+	// Set drive status
+	status->writeProt = 0xF0;
+	status->diskInPlace = 0x08;
+	status->dQDrive = drvNum;
+	status->dQRefNum = d->dCtlRefNum;
+	status->driveSize = (RDiskSize / 512) & 0xFFFF;
+	status->driveS1 = ((RDiskSize / 512) & 0xFFFF0000) >> 16;
+
+	// Set driver flags?
 	/* d->dCtlFlags |= dReadEnableMask | dWritEnableMask | 
 					dCtlEnableMask | dStatEnableMask | 
-					dNeedLockMask; */
+					dNeedLockMask; // 0x4F */
 
 	// Add drive to drive queue and return
 	RDAddDrive(status->dQRefNum, drvNum, (DrvQElPtr)&status->qLink);
 	return noErr;
 }
 
-static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
-	char startup, ram;
+OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
+	char startup = 0, ram = 0;
 
-	// Return if initialized. Otherwise mark init done
-	if (c->init_done) { return noErr; }
-	else { c->init_done = 1; }
+	// Mark init done
+	c->init_done = 1;
 
 	// Read PRAM
 	RDReadXPRAM(1, 4, &startup);
@@ -103,10 +110,10 @@ static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	if (startup || RDIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,
 		// Set ROM disk attributes
 		c->drvsts.writeProt = -1; // Set write protected
-		// Clear RAM disk structure fields (even though we used NewHandleSysClear)
+		// Clear disk fields (even though we used NewHandleSysClear)
 		c->ramdisk = NULL;
 		c->ramdisk_alloc = NULL;
-		c-> ramdisk_valid = 0;
+		c->ramdisk_valid = 0;
 		// If RAM disk set in PRAM or A pressed, enable RAM disk
 		if (ram || RDISAPressed()) { 
 			unsigned long minBufPtr, newBufPtr;
@@ -132,6 +139,7 @@ static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		// Remove our driver from the drive queue
 		DrvQElPtr dq;
 		QHdrPtr QHead = (QHdrPtr)0x308;
+
 		// Loop through entire drive queue, searching for our device or stopping at the end.
 		dq = (DrvQElPtr)QHead->qHead;
 		while((dq != (DrvQElPtr)(QHead->qTail)) && (dq->dQRefNum != d->dCtlRefNum)) {
@@ -167,8 +175,8 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	// Initialize if this is the first prime call
 	if (!c->init_done) { 
 		OSErr ret = RDiskInit(p, d, c);
-		if (ret != noErr) { return ret; } // Return error if init failed
-	 }
+		if (ret != noErr) { return ret; }
+	}
 
 	// Get pointer to RAM or ROM disk buffer
 	disk = c->ramdisk && c->ramdisk_valid ? c->ramdisk : RDiskBuf;
@@ -178,20 +186,24 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 		case fsAtMark: offset = d->dCtlPosition; break;
 		case fsFromStart:
 			offset = p->ioPosOffset;
-			//FIXME: if (offset < 0) { fail }
+			//if (offset < 0) { return posErr; }
 			break;
-		case fsFromMark: offset=  d->dCtlPosition + p->ioPosOffset; break;
+		case fsFromMark: offset = d->dCtlPosition + p->ioPosOffset; break;
 		default: offset = 0; break; //FIXME: Error if unsupported ioPosMode?
 	}
-	// FIXME: if (offset >= RDiskSize) { fail }
-	disk += offset;
+	//  Bounds checking
+	/*if (offset >= RDiskSize || p->ioReqCount >= RDiskSize || 
+		offset + p->ioReqCount >= RDiskSize || 
+		disk + offset < disk) { return posErr; }*/
 
 	// Service read or write request
 	cmd = p->ioTrap & 0x00FF;
 	if (cmd == aRdCmd) { // Read
 		// Return immediately if verify operation requested
 		//FIXME: follow either old (verify) or new (read uncached) convention
-		if (p->ioPosMode & rdVerifyMask) { return noErr; }
+		if (p->ioPosMode & rdVerifyMask) {
+			return noErr;
+		}
 		// Read from disk into buffer.
 		if (*MMU32bit) { BlockMove(disk, (char*)p->ioBuffer, p->ioReqCount); }
 		else { // 24-bit addressing
@@ -219,7 +231,7 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	//FIXME: Should we fail if cmd isn't read or write?
 }
 
-static OSErr RDiskAccRun(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
+OSErr RDiskAccRun(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Disable accRun
 	d->dCtlDelay = 0;
 	d->dCtlFlags &= ~dNeedTimeMask;
@@ -286,7 +298,6 @@ OSErr RDiskStatus(IOParamPtr p, DCtlPtr d) {
 			return noErr;
 		default: return statusErr;
 	}
-	return noErr;
 }
 
 #pragma parameter __D0 RDiskClose(__A0, __A1)
