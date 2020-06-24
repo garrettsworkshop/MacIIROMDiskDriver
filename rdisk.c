@@ -44,6 +44,7 @@ typedef struct RDiskStorage_s {
 	char ramdisk_valid;
 } RDiskStorage_t;
 
+#pragma parameter __D0 RDiskOpen(__A0, __A1)
 OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	DrvQElPtr dq;
 	int drvnum = 1;
@@ -163,6 +164,7 @@ static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	}
 }
 
+#pragma parameter __D0 RDiskPrime(__A0, __A1)
 OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	RDiskStorage_t *c;
 	char cmd;
@@ -268,6 +270,7 @@ static OSErr RDiskAccRun(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	return noErr; // Always return success
 }
 
+#pragma parameter __D0 RDiskControl(__A0, __A1)
 OSErr RDiskControl(IOParamPtr p, DCtlPtr d) {
 	RDiskStorage_t *c;
 	// Do nothing if dCtlStorage null
@@ -282,6 +285,7 @@ OSErr RDiskControl(IOParamPtr p, DCtlPtr d) {
 	}
 }
 
+#pragma parameter __D0 RDiskStatus(__A0, __A1)
 OSErr RDiskStatus(IOParamPtr p, DCtlPtr d) {
 	// Fail if dCtlStorage null or unsupported status call code
 	if (!d->dCtlStorage) { return statusErr; } //FIXME: Return offLinErr instead?
@@ -296,6 +300,7 @@ OSErr RDiskStatus(IOParamPtr p, DCtlPtr d) {
 	return noErr;
 }
 
+#pragma parameter __D0 RDiskClose(__A0, __A1)
 OSErr RDiskClose(IOParamPtr p, DCtlPtr d) {
 	// If dCtlStorage not null, dispose of it and its contents
 	if (d->dCtlStorage) {
