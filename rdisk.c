@@ -29,10 +29,10 @@ typedef void (*ROMDiskCopy_t)(char *, char *, unsigned long);
 
 // Switch to 24-bit mode and copy. Call this with
 // PC==0x408XXXXX, not PC==0x008XXXXX
-void RDiskCopy24(char *source, char *dest, unsigned long count) {
+void RDiskCopy24(char *sourcePtr, char *destPtr, unsigned long byteCount) {
 	char mode = true32b;
 	SwapMMUMode(&mode);
-	BlockMove(source, dest, count);
+	BlockMove(sourcePtr, destPtr, byteCount);
 	SwapMMUMode(&mode);
 }
 
