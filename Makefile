@@ -40,7 +40,7 @@ bin/rdisk_nonreloc.bin: bin obj/rdisk.o
 	$(OBJCOPY) -O binary obj/rdisk.o $@
 
 bin/rom.bin: bin bin/rdisk.bin obj/rdisk_rel.sym 
-	cp baserom_braun.bin bin/rom.bin
+	cp baserom_braun_2m_0.9.bin bin/rom.bin
 	cat bin/rdisk.bin | dd of=bin/rom.bin bs=1 seek=335266 skip=50 conv=notrunc # Copy driver code
 	printf '\x78' | dd of=bin/rom.bin bs=1 seek=335168 count=1 conv=notrunc # Set resource flags
 	printf '\x4F' | dd of=bin/rom.bin bs=1 seek=335216 count=1 conv=notrunc # Set driver flags
