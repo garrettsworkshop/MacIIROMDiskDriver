@@ -103,11 +103,11 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	c->init_done = 1;
 
 	// Read PRAM
-	RDReadXPRAM(1, 4, &startup);
-	RDReadXPRAM(1, 5, &ram);
+	/*RDReadXPRam(1, 4, &startup);
+	RDReadXPRam(1, 5, &ram);*/
 
 	// Either enable ROM disk or remove ourselves from the drive queue
-	if (startup || RDIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,
+	/*if (startup || RDIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,*/
 		// Set ROM disk attributes
 		c->drvsts.writeProt = -1; // Set write protected
 		// Clear disk fields (even though we used NewHandleSysClear)
@@ -115,7 +115,7 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		c->ramdisk_alloc = NULL;
 		c->ramdisk_valid = 0;
 		// If RAM disk set in PRAM or A pressed, enable RAM disk
-		if (ram || RDISAPressed()) { 
+		/*if (ram || RDISAPressed()) { 
 			unsigned long minBufPtr, newBufPtr;
 			// Clearing write protect marks RAM disk enabled
 			c->drvsts.writeProt = 0;
@@ -133,9 +133,9 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			// Enable accRun to allocate and copy later
 			d->dCtlFlags |= dNeedTimeMask;
 			d->dCtlDelay = 0x10;
-		}
+		}*/
 		return noErr;
-	} else { // Otherwise if R not held down and ROM boot not set in PRAM,
+	/*} else { // Otherwise if R not held down and ROM boot not set in PRAM,
 		// Remove our driver from the drive queue
 		DrvQElPtr dq;
 		QHdrPtr QHead = (QHdrPtr)0x308;
@@ -155,7 +155,7 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 
 		// Return disk offline error
 		return offLinErr;
-	}
+	}*/
 }
 
 #pragma parameter __D0 RDiskPrime(__A0, __A1)
@@ -179,8 +179,7 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	}
 
 	// Get pointer to RAM or ROM disk buffer
-	disk = c->ramdisk && c->ramdisk_valid ? c->ramdisk : RDiskBuf;
-
+	disk = RDiskBuf; // c->ramdisk && c->ramdisk_valid ? c->ramdisk : RDiskBuf;
 	// Add offset to buffer pointer according to positioning mode
 	switch (p->ioPosMode & 0x000F) {
 		case fsAtMark: offset = d->dCtlPosition; break;
@@ -216,8 +215,9 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 		p->ioPosOffset = d->dCtlPosition = offset + p->ioReqCount;
 		return noErr;
 	} else if (cmd == aWrCmd) { // Write
-		// Fail if write protected or RAM disk buffer not set up
-		if (c->drvsts.writeProt || disk == c->ramdisk) { return wPrErr; }
+		return wPrErr;
+		/*// Fail if write protected or RAM disk buffer not set up
+		if (c->drvsts.writeProt || !c->ramdisk || !c->ramdisk_valid) { return wPrErr; }
 		// Write from buffer into disk.
 		if (*MMU32bit) { BlockMove((char*)p->ioBuffer, disk, p->ioReqCount); }
 		else { // 24-bit addressing
@@ -227,12 +227,12 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 		// Update count and position/offset
 		p->ioActCount = p->ioReqCount;
 		p->ioPosOffset = d->dCtlPosition = offset + p->ioReqCount;
-		return noErr;
+		return noErr;*/
 	} else { return noErr; }
 	//FIXME: Should we fail if cmd isn't read or write?
 }
 
-OSErr RDiskAccRun(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
+/*OSErr RDiskAccRun(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Disable accRun
 	d->dCtlDelay = 0;
 	d->dCtlFlags &= ~dNeedTimeMask;
@@ -270,7 +270,7 @@ OSErr RDiskAccRun(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	}
 
 	return noErr; // Always return success
-}
+}*/
 
 #pragma parameter __D0 RDiskControl(__A0, __A1)
 OSErr RDiskControl(IOParamPtr p, DCtlPtr d) {
@@ -282,7 +282,7 @@ OSErr RDiskControl(IOParamPtr p, DCtlPtr d) {
 
 	// Handle control request based on csCode
 	switch (((CntrlParamPtr)p)->csCode) {
-		case accRun: return RDiskAccRun(p, d, c);
+		//case accRun: return RDiskAccRun(p, d, c);
 		default: return controlErr;
 	}
 }
