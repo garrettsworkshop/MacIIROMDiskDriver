@@ -7,6 +7,18 @@
 #include <OSUtils.h>
 
 #include "rdtraps.h"
+
+// This function is here just to put padding at the
+// beginning of the output file
+void GWROMDisk() {
+	StripAddress(&GWROMDisk);
+	StripAddress(&GWROMDisk);
+	StripAddress(&GWROMDisk);
+	StripAddress(&GWROMDisk);
+	StripAddress(&GWROMDisk);
+	StripAddress(&GWROMDisk);
+}
+
 #define RDiskSize (0x00180000L)
 #define RDiskBuf ((char*)0x40880000)
 #define BufPtr ((Ptr*)0x10C)
@@ -39,6 +51,10 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 
 	// Do nothing if already opened
 	if (d->dCtlStorage) { return noErr; }
+
+	// Reference GWROMDisk() just so it ends up 
+	// at the beginning of the output file
+	StripAddress(&GWROMDisk);
 	
 	// Figure out first available drive number
 	for (dq = (DrvQElPtr)(GetDrvQHdr())->qHead; dq; dq = (DrvQElPtr)dq->qLink) {
