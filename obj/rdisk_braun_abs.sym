@@ -1,0 +1,21 @@
+
+obj/rdisk_braun_reloc.o:     file format elf32-m68k
+
+SYMBOL TABLE:
+40851d70 l    d  .text	00000000 .text
+00000000 l    d  .comment	00000000 .comment
+00000000 l    df *ABS*	00000000 rdisk_braun.c
+40852176 g     F .text	0000002c RDiskStatus
+40851dee g     F .text	00000014 RomDrvAddDrive
+40852064 g     F .text	0000003c RomDrvClose
+40851ed2 g     F .text	00000182 RomDrvPrime
+00000000         *UND*	00000000 _start
+408520ae g     F .text	000000b6 RDiskControl
+408541b2 g       .text	00000000 __bss_start
+40851d70 g     F .text	00000032 BBraunROMDisk
+40851e14 g     F .text	000000ae RomDrvOpen
+408541b2 g       .text	00000000 _edata
+408541b4 g       .text	00000000 _end
+40851db2 g     F .text	0000002e RomDrvCopy
+
+

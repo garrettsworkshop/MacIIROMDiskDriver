@@ -1,0 +1,19 @@
+
+obj/rdisk_braun.o:     file format elf32-m68k
+
+SYMBOL TABLE:
+00000000 l    df *ABS*	00000000 rdisk_braun.c
+00000000 l    d  .text	00000000 .text
+00000000 l    d  .data	00000000 .data
+00000000 l    d  .bss	00000000 .bss
+00000000 l    d  .comment	00000000 .comment
+00000000 g     F .text	00000032 BBraunROMDisk
+00000042 g     F .text	0000002e RomDrvCopy
+0000007e g     F .text	00000014 RomDrvAddDrive
+000000a4 g     F .text	000000ae RomDrvOpen
+00000162 g     F .text	00000182 RomDrvPrime
+000002f4 g     F .text	0000003c RomDrvClose
+0000033e g     F .text	000000b6 RDiskControl
+00000406 g     F .text	0000002c RDiskStatus
+
+
