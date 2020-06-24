@@ -7,19 +7,11 @@
 #include <OSUtils.h>
 
 #define RDiskSize (0x00780000L)
+#include "rdtraps.h"
 #define RDiskBuf ((char*)0x40880000)
 #define BufPtr ((Ptr*)0x10C)
 #define MemTop ((Ptr*)0x108)
 #define MMU32bit ((char*)0x0CB2)
-
-#pragma parameter __D0 ReadXPRam(__D0, __D1, __A0)
-OSErr ReadXPRam(short numBytes, short whichByte, void *dest) = {0x4840, 0x3001, 0xA051}; 
-
-#pragma parameter __D0 RDiskAddDrive(__D1, __D0, __A0)
-OSErr RDiskAddDrive(short drvrRefNum, short drvNum, DrvQElPtr dq) = {0x4840, 0x3001, 0xA04E}; 
-
-inline char IsRPressed() { return *((char*)0x175) & 0x80; }
-inline char ISAPressed() { return *((char*)0x174) & 0x01; }
 
 #define Copy24Size (64)
 typedef void (*ROMDiskCopy_t)(char *, char *, unsigned long);
@@ -87,7 +79,7 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 					dNeedLockMask; */
 
 	// Add drive to drive queue and return
-	RDiskAddDrive(c->drvsts.dQRefNum, drvnum, (DrvQElPtr)&c->drvsts.qLink);
+	RDAddDrive(status->dQRefNum, drvNum, (DrvQElPtr)&status->qLink);
 	return noErr;
 }
 
@@ -99,11 +91,11 @@ static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	else { c->init_done = 1; }
 
 	// Read PRAM
-	ReadXPRam(1, 4, &startup);
-	ReadXPRam(1, 5, &ram);
+	RDReadXPRAM(1, 4, &startup);
+	RDReadXPRAM(1, 5, &ram);
 
 	// Either enable ROM disk or remove ourselves from the drive queue
-	if (startup || IsRPressed()) { // If ROM disk boot set in PRAM or R pressed,
+	if (startup || RDIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,
 		// Set ROM disk attributes
 		c->drvsts.writeProt = -1; // Set write protected
 		// Clear RAM disk structure fields (even though we used NewHandleSysClear)
@@ -111,7 +103,7 @@ static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		c->ramdisk_alloc = NULL;
 		c-> ramdisk_valid = 0;
 		// If RAM disk set in PRAM or A pressed, enable RAM disk
-		if (ram || ISAPressed()) { 
+		if (ram || RDISAPressed()) { 
 			unsigned long minBufPtr, newBufPtr;
 			// Clearing write protect marks RAM disk enabled
 			c->drvsts.writeProt = 0;
