@@ -274,14 +274,14 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 #pragma parameter __D0 RDiskControl(__A0, __A1)
 OSErr RDiskControl(IOParamPtr p, DCtlPtr d) {
 	RDiskStorage_t *c;
-	// Do nothing if dCtlStorage null
-	if (!d->dCtlStorage) { return noErr; }
 	// Dereference dCtlStorage to get pointer to our context
 	c = *(RDiskStorage_t**)d->dCtlStorage;
 
 	// Handle control request based on csCode
 	switch (((CntrlParamPtr)p)->csCode) {
-		//case accRun: return RDiskAccRun(p, d, c);
+		/*case accRun: 
+			if (!d->dCtlStorage) { return noErr; }
+			return RDiskAccRun(p, d, c);*/
 		default: return controlErr;
 	}
 }
