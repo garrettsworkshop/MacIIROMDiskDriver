@@ -93,7 +93,7 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		c->ramdisk_alloc = NULL;
 		c->ramdisk_valid = 0;
 		// If RAM disk set in PRAM or A pressed, enable RAM disk
-		/*if (ram || RDiskISAPressed()) { 
+		if (ram || RDiskIsAPressed()) { 
 			unsigned long minBufPtr, newBufPtr;
 			// Clearing write protect marks RAM disk enabled
 			c->drvsts.writeProt = 0;
@@ -111,7 +111,7 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			// Enable accRun to allocate and copy later
 			d->dCtlFlags |= dNeedTimeMask;
 			d->dCtlDelay = 0x10;
-		}*/
+		}
 		return noErr;
 	} else { // Otherwise if R not held down and ROM boot not set in PRAM,
 		// Remove our driver from the drive queue
