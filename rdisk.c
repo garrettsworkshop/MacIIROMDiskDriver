@@ -115,12 +115,13 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		return noErr;
 	} else { // Otherwise if R not held down and ROM boot not set in PRAM,
 		// Remove our driver from the drive queue
-		/*DrvQElPtr dq;
+		DrvQElPtr dq;
 		QHdrPtr QHead = (QHdrPtr)0x308;
 
 		// Loop through entire drive queue, searching for our device or stopping at the end.
 		dq = (DrvQElPtr)QHead->qHead;
-		while((dq != (DrvQElPtr)(QHead->qTail)) && (dq->dQRefNum != d->dCtlRefNum)) {
+		while ((dq != (DrvQElPtr)(QHead->qTail)) && 
+			   (dq->dQRefNum != d->dCtlRefNum)) {
 			dq = (DrvQElPtr)(dq->qLink);
 		}
 		// If we found our driver, remove it from the queue
@@ -132,7 +133,7 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		d->dCtlStorage = NULL;
 
 		// Return disk offline error
-		return offLinErr;*/
+		return offLinErr;
 	}
 }
 
