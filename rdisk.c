@@ -107,16 +107,20 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 				// Set RAM disk buffer pointer. Defer copying until accRun
 				// Don't set ramdisk_alloc because there is nothing to free.
 				c->ramdisk = *BufPtr;
+				// Copy ROM disk image to RAM disk
+				BlockMove(RDiskBuf, c->ramdisk, RDiskSize);
+				c->ramdisk_valid = 1;
+			} else {
+				// Enable accRun to allocate and copy later
+				d->dCtlFlags |= dNeedTimeMask;
+				d->dCtlDelay = 0x10;
 			}
-			// Enable accRun to allocate and copy later
-			d->dCtlFlags |= dNeedTimeMask;
-			d->dCtlDelay = 0x10;
 		}
 		return noErr;
 	} else { // Otherwise if R not held down and ROM boot not set in PRAM,
 		// Remove our driver from the drive queue
 		DrvQElPtr dq;
-		QHdrPtr QHead = (QHdrPtr)0x308;
+		QHdrPtr QHead = DrvQHdr;
 
 		// Loop through entire drive queue, searching for our device or stopping at the end.
 		dq = (DrvQElPtr)QHead->qHead;
@@ -157,7 +161,7 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	}
 
 	// Get pointer to RAM or ROM disk buffer
-	disk = RDiskBuf; // c->ramdisk && c->ramdisk_valid ? c->ramdisk : RDiskBuf;
+	disk = c->ramdisk && c->ramdisk_valid ? c->ramdisk : RDiskBuf;
 	// Add offset to buffer pointer according to positioning mode
 	switch (p->ioPosMode & 0x000F) {
 		case fsAtMark: offset = d->dCtlPosition; break;
@@ -167,9 +171,9 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	}
 	disk += offset;
 	//  Bounds checking
-	if (offset >= RDiskSize || p->ioReqCount >= RDiskSize || 
+	/*if (offset >= RDiskSize || p->ioReqCount >= RDiskSize || 
 		offset + p->ioReqCount >= RDiskSize || 
-		disk + offset < disk) { return posErr; }
+		disk + offset < disk) { return posErr; }*/
 
 	// Service read or write request
 	cmd = p->ioTrap & 0x00FF;
@@ -191,7 +195,6 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 		p->ioPosOffset = d->dCtlPosition;
 		return noErr;
 	} else if (cmd == aWrCmd) { // Write
-		return wPrErr;
 		// Fail if write protected or RAM disk buffer not set up
 		if (c->drvsts.writeProt || !c->ramdisk || !c->ramdisk_valid) { return wPrErr; }
 		// Write from buffer into disk.
@@ -213,6 +216,7 @@ OSErr RDiskAccRun(CntrlParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Disable accRun
 	d->dCtlDelay = 0;
 	d->dCtlFlags &= ~dNeedTimeMask;
+	RDiskBreak();
 
 	// Set RAM disk buffer if our disk is writable and no RAM buffer set
 	if (!c->drvsts.writeProt && !c->ramdisk) {
