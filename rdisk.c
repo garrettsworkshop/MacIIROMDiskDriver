@@ -6,34 +6,7 @@
 #include <Events.h>
 #include <OSUtils.h>
 
-#include "rdtraps.h"
-
-// This function is here just to put padding at the
-// beginning of the output file
-void GWROMDisk() {
-	__asm__ __volatile__
-	(
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t"
-		".long  0x00000000\n\t":::);
-}
-
-#define RDiskSize (0x00180000L)
-#define RDiskBuf ((char*)0x40880000)
-#define BufPtr ((Ptr*)0x10C)
-#define MemTop ((Ptr*)0x108)
-#define MMU32bit ((char*)0x0CB2)
-
-typedef void (*ROMDiskCopy_t)(char *, char *, unsigned long);
+#include "rdisk.h"
 
 // Switch to 24-bit mode and copy. Call this with
 // PC==0x408XXXXX, not PC==0x008XXXXX
@@ -46,7 +19,7 @@ void RDiskCopy24(char *sourcePtr, char *destPtr, unsigned long byteCount) {
 
 typedef struct RDiskStorage_s {
 	DrvSts2 drvsts;
-	char init_done;
+	unsigned long init_done;
 	char *ramdisk;
 	Ptr ramdisk_alloc;
 	char ramdisk_valid;
@@ -62,10 +35,6 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	// Do nothing if already opened
 	if (d->dCtlStorage) { return noErr; }
 
-	// Reference GWROMDisk() just so it ends up 
-	// at the beginning of the output file
-	StripAddress(&GWROMDisk);
-	
 	// Figure out first available drive number
 	drvNum = 1;
 	for (dq = (DrvQElPtr)(GetDrvQHdr())->qHead; dq; dq = (DrvQElPtr)dq->qLink) {
@@ -87,6 +56,7 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	c->ramdisk_valid = 0;
 
 	// Set drive status
+	status = &c->drvsts;
 	status->writeProt = 0xF0;
 	status->diskInPlace = 0x08;
 	status->dQDrive = drvNum;
@@ -111,11 +81,11 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	c->init_done = 1;
 
 	// Read PRAM
-	/*RDiskReadXPRam(1, 4, &startup);
-	RDiskReadXPRam(1, 5, &ram);*/
+	RDiskReadXPRAM(1, 4, &startup);
+	RDiskReadXPRAM(1, 5, &ram);
 
 	// Either enable ROM disk or remove ourselves from the drive queue
-	/*if (startup || RDiskIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,*/
+	if (startup || RDiskIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,*/
 		// Set ROM disk attributes
 		c->drvsts.writeProt = -1; // Set write protected
 		// Clear disk fields (even though we used NewHandleSysClear)
@@ -143,9 +113,9 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			d->dCtlDelay = 0x10;
 		}*/
 		return noErr;
-	/*} else { // Otherwise if R not held down and ROM boot not set in PRAM,
+	} else { // Otherwise if R not held down and ROM boot not set in PRAM,
 		// Remove our driver from the drive queue
-		DrvQElPtr dq;
+		/*DrvQElPtr dq;
 		QHdrPtr QHead = (QHdrPtr)0x308;
 
 		// Loop through entire drive queue, searching for our device or stopping at the end.
@@ -162,8 +132,8 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		d->dCtlStorage = NULL;
 
 		// Return disk offline error
-		return offLinErr;
-	}*/
+		return offLinErr;*/
+	}
 }
 
 #pragma parameter __D0 RDiskPrime(__A0, __A1)
@@ -171,8 +141,8 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	RDiskStorage_t *c;
 	char cmd;
 	char *disk;
-	unsigned long offset;
-	ROMDiskCopy_t copy24 = RDiskCopy24;
+	long offset;
+	RDiskCopy_t copy24 = &RDiskCopy24;
 
 	// Return disk offline error if dCtlStorage null
 	if (!d->dCtlStorage) { return offLinErr; }
@@ -190,40 +160,38 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	// Add offset to buffer pointer according to positioning mode
 	switch (p->ioPosMode & 0x000F) {
 		case fsAtMark: offset = d->dCtlPosition; break;
-		case fsFromStart:
-			offset = p->ioPosOffset;
-			//if (offset < 0) { return posErr; }
-			break;
+		case fsFromStart: offset = p->ioPosOffset; break;
 		case fsFromMark: offset = d->dCtlPosition + p->ioPosOffset; break;
-		default: offset = 0; break; //FIXME: Error if unsupported ioPosMode?
+		default: break;
 	}
 	disk += offset;
 	//  Bounds checking
-	/*if (offset >= RDiskSize || p->ioReqCount >= RDiskSize || 
+	if (offset >= RDiskSize || p->ioReqCount >= RDiskSize || 
 		offset + p->ioReqCount >= RDiskSize || 
-		disk + offset < disk) { return posErr; }*/
+		disk + offset < disk) { return posErr; }
 
 	// Service read or write request
 	cmd = p->ioTrap & 0x00FF;
 	if (cmd == aRdCmd) { // Read
 		// Return immediately if verify operation requested
 		//FIXME: follow either old (verify) or new (read uncached) convention
-		if (p->ioPosMode & rdVerifyMask) {
+		/*if (p->ioPosMode & rdVerifyMask) {
 			return noErr;
-		}
+		}*/
 		// Read from disk into buffer.
-		if (*MMU32bit) { BlockMove(disk, (char*)p->ioBuffer, p->ioReqCount); }
+		if (*MMU32bit) { BlockMove(disk, p->ioBuffer, p->ioReqCount); }
 		else { // 24-bit addressing
 			char *buffer = (char*)Translate24To32(StripAddress(p->ioBuffer));
 			copy24(disk, buffer, p->ioReqCount);
 		}
 		// Update count
 		p->ioActCount = p->ioReqCount;
-		p->ioPosOffset = d->dCtlPosition = offset + p->ioReqCount;
+		d->dCtlPosition = offset + p->ioReqCount;
+		p->ioPosOffset = d->dCtlPosition;
 		return noErr;
 	} else if (cmd == aWrCmd) { // Write
 		return wPrErr;
-		/*// Fail if write protected or RAM disk buffer not set up
+		// Fail if write protected or RAM disk buffer not set up
 		if (c->drvsts.writeProt || !c->ramdisk || !c->ramdisk_valid) { return wPrErr; }
 		// Write from buffer into disk.
 		if (*MMU32bit) { BlockMove((char*)p->ioBuffer, disk, p->ioReqCount); }
@@ -233,13 +201,14 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 		}
 		// Update count and position/offset
 		p->ioActCount = p->ioReqCount;
-		p->ioPosOffset = d->dCtlPosition = offset + p->ioReqCount;
-		return noErr;*/
+		d->dCtlPosition = offset + p->ioReqCount;
+		p->ioPosOffset = d->dCtlPosition;
+		return noErr;
 	} else { return noErr; }
 	//FIXME: Should we fail if cmd isn't read or write?
 }
 
-/*OSErr RDiskAccRun(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
+OSErr RDiskAccRun(CntrlParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Disable accRun
 	d->dCtlDelay = 0;
 	d->dCtlFlags &= ~dNeedTimeMask;
@@ -269,7 +238,7 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 		// Mark write protected if we couldn't allocate RAM buffer?
 		c->drvsts.writeProt = -1;
 	} else if (c->ramdisk && !c->ramdisk_valid) { // Else if buffer exists but is not valid,
-		ROMDiskCopy_t copy24 = RDiskCopy24;
+		RDiskCopy_t copy24 = RDiskCopy24;
 		// Copy ROM disk to RAM disk buffer if not yet copied
 		if (*MMU32bit) { BlockMove(RDiskBuf, c->ramdisk, RDiskSize); }
 		else { copy24(RDiskBuf, c->ramdisk, RDiskSize); }
@@ -277,32 +246,32 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	}
 
 	return noErr; // Always return success
-}*/
+}
 
 #pragma parameter __D0 RDiskControl(__A0, __A1)
-OSErr RDiskControl(IOParamPtr p, DCtlPtr d) {
+OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
 	RDiskStorage_t *c;
+	// Fail if dCtlStorage null
+	if (!d->dCtlStorage) { return controlErr; }
 	// Dereference dCtlStorage to get pointer to our context
 	c = *(RDiskStorage_t**)d->dCtlStorage;
-
 	// Handle control request based on csCode
-	switch (((CntrlParamPtr)p)->csCode) {
-		/*case accRun: 
+	switch (p->csCode) {
+		case accRun: 
 			if (!d->dCtlStorage) { return noErr; }
-			return RDiskAccRun(p, d, c);*/
+			return RDiskAccRun(p, d, c);
 		default: return controlErr;
 	}
 }
 
 #pragma parameter __D0 RDiskStatus(__A0, __A1)
-OSErr RDiskStatus(IOParamPtr p, DCtlPtr d) {
-	// Fail if dCtlStorage null or unsupported status call code
-	if (!d->dCtlStorage) { return statusErr; } //FIXME: Return offLinErr instead?
-
+OSErr RDiskStatus(CntrlParamPtr p, DCtlPtr d) {
+	// Fail if dCtlStorage null
+	if (!d->dCtlStorage) { return statusErr; }
 	// Handle status request based on csCode
-	switch (((CntrlParamPtr)p)->csCode) {
+	switch (p->csCode) {
 		case drvStsCode:
-			BlockMove(*d->dCtlStorage, &((CntrlParamPtr)p)->csParam, sizeof(DrvSts2));
+			BlockMove(*d->dCtlStorage, &p->csParam, sizeof(DrvSts2));
 			return noErr;
 		default: return statusErr;
 	}
@@ -311,12 +280,11 @@ OSErr RDiskStatus(IOParamPtr p, DCtlPtr d) {
 #pragma parameter __D0 RDiskClose(__A0, __A1)
 OSErr RDiskClose(IOParamPtr p, DCtlPtr d) {
 	// If dCtlStorage not null, dispose of it and its contents
-	if (d->dCtlStorage) {
-		RDiskStorage_t *c = *(RDiskStorage_t**)d->dCtlStorage;
-		if (c->ramdisk_alloc) { DisposePtr(c->ramdisk_alloc); }
-		HUnlock(d->dCtlStorage);
-		DisposeHandle(d->dCtlStorage);
-	}
+	if (!d->dCtlStorage) { return noErr; }
+	RDiskStorage_t *c = *(RDiskStorage_t**)d->dCtlStorage;
+	if (c->ramdisk_alloc) { DisposePtr(c->ramdisk_alloc); }
+	HUnlock(d->dCtlStorage);
+	DisposeHandle(d->dCtlStorage);
 	d->dCtlStorage = NULL;
 	return noErr;
 }
