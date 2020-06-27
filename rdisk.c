@@ -145,15 +145,15 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	c->init_done = 1;
 
 	// Read PRAM
-	/*RDiskReadXPRAM(1, 4, &startup);
-	RDiskReadXPRAM(1, 5, &ram);*/
+	RDiskReadXPRAM(1, 4, &startup);
+	RDiskReadXPRAM(1, 5, &ram);
 
 	// Either enable ROM disk or remove ourselves from the drive queue
-	if (/*startup || */RDiskIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,*/
+	if (startup || RDiskIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,*/
 		// Set ROM disk attributes
 		c->status.writeProt = -1; // Set write protected
 		// If RAM disk set in PRAM or A pressed, enable RAM disk
-		if (/*ram || */RDiskIsAPressed()) { 
+		if (ram || RDiskIsAPressed()) { 
 			// Try to allocate RAM disk buffer
 			if (*MMU32bit) { // 32-bit mode
 				unsigned long minBufPtr, newBufPtr;
