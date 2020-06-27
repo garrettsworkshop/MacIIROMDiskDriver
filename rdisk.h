@@ -7,9 +7,8 @@
 #define MemTop ((Ptr*)0x108)
 #define MMU32bit ((char*)0xCB2)
 #define JIODone ((char*)0x8FC)
-#define DrvQHdr ((QHdrPtr)0x308)
 
-#pragma parameter __D0 RDReadXPRAM(__D0, __D1, __A0)
+#pragma parameter __D0 RDiskReadXPRAM(__D0, __D1, __A0)
 OSErr RDiskReadXPRAM(short numBytes, short whichByte, void *dest) = {0x4840, 0x3001, 0xA051};
 
 // Other definition of RDiskAddDrive with register calling convention
@@ -34,6 +33,13 @@ inline char RDiskIsAPressed() { return *((char*)0x174) & 0x01; }
 
 void RDiskBreak() = { 0xA9FF };
 
-typedef void (*RDiskCopy_t)(char *, char *, unsigned long);
+typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
+
+typedef struct RDiskStorage_s {
+	DrvSts2 status;
+	unsigned long init_done;
+	char *ramdisk;
+	RDiskCopy_t copy24;
+} RDiskStorage_t;
 
 #endif
