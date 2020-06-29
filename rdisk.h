@@ -40,6 +40,7 @@ typedef struct RDiskStorage_s {
 	unsigned long init_done;
 	char *ramdisk;
 	RDiskCopy_t copy24;
+	char mount;
 } RDiskStorage_t;
 
 #endif

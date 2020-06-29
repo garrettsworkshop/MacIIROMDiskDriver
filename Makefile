@@ -47,7 +47,7 @@ bin/driver.bin: bin obj/driver.o
 
 bin/rom.bin: baserom.bin RDisk1M5.dsk bin bin/driver.bin obj/entry_rel.sym 
 	cp baserom.bin $@ # copy base rom
-	dd if=bin/driver.bin of=$@ bs=1 seek=335266 skip=50 conv=notrunc # Copy driver code
+	dd if=bin/driver.bin of=$@ bs=1 seek=335248 skip=32 conv=notrunc # Copy driver code
 	printf '\x78' | dd of=$@ bs=1 seek=335168 count=1 conv=notrunc # Set resource flags
 	printf '\x4F' | dd of=$@ bs=1 seek=335216 count=1 conv=notrunc # Set driver flags
 	cat obj/entry_rel.sym | grep "DOpen" | cut -c5-8 | xxd -r -p - | dd of=$@ bs=1 seek=335224 count=2 conv=notrunc
