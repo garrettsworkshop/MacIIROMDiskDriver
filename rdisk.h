@@ -37,10 +37,11 @@ typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
 
 typedef struct RDiskStorage_s {
 	DrvSts2 status;
-	unsigned long init_done;
+	char initialized;
+	char offline;
+	char forceMount;
 	char *ramdisk;
 	RDiskCopy_t copy24;
-	char mount;
 } RDiskStorage_t;
 
 #endif

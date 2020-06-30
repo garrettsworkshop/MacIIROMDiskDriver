@@ -78,6 +78,13 @@ const long RDiskIcon[65] = {
 	0
 };
 
+#pragma parameter __D0 RDiskBootCheckPRAM()
+short RDiskBootCheckPRAM() {
+	char mount;
+	RDiskReadXPRAM(1, 4, &mount);
+	return mount == 0x5D;
+}
+
 // Switch to 24-bit mode and copy
 void RDiskCopy24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 	char mode = true32b;
@@ -116,7 +123,9 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	c = *(RDiskStorage_t**)d->dCtlStorage;
 
 	// Initialize storage struct fields
-	c->init_done = 0;
+	c->initialized = 0;
+	c->offline = 0;
+	c->forceMount = 0;
 	c->ramdisk = NULL;
 	c->copy24 = (RDiskCopy_t)copy24;
 
@@ -138,22 +147,22 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	return noErr;
 }
 
-OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
-	char startup = 0, ram = 0;
+static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
+	char mount = 0, ram = 0;
 
 	// Mark init done
-	c->init_done = 1;
+	c->initialized = 1;
 
 	// Read PRAM
-	RDiskReadXPRAM(1, 4, &startup);
+	RDiskReadXPRAM(1, 4, &mount);
 	RDiskReadXPRAM(1, 5, &ram);
 
 	// Either enable ROM disk or remove ourselves from the drive queue
-	if (startup || RDiskIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,*/
+	if (c->forceMount || mount || RDiskIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,
 		// Set ROM disk attributes
 		c->status.writeProt = -1; // Set write protected
 		// If RAM disk set in PRAM or A pressed, enable RAM disk
-		if (ram || RDiskIsAPressed() || c->mount) { 
+		if (ram || RDiskIsAPressed()) { // If RAM disk set in PRAM or A pressed
 			// Try to allocate RAM disk buffer
 			if (*MMU32bit) { // 32-bit mode
 				unsigned long minBufPtr, newBufPtr;
@@ -161,7 +170,7 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 				minBufPtr = ((unsigned long)*MemTop / 2) + 1024;
 				newBufPtr = (unsigned long)*BufPtr - RDiskSize;	
 				if (newBufPtr > minBufPtr && (unsigned long)*BufPtr > newBufPtr) {
-					// Allocate RAM disk buffer by lowering BufPtrå			
+					// Allocate RAM disk buffer by lowering BufPtra
 					*BufPtr = (Ptr)newBufPtr;
 					// Set RAM disk buffer pointer.
 					c->ramdisk = *BufPtr;
@@ -200,9 +209,8 @@ OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		// If we found our driver, remove it from the queue
 		if (dq->dQRefNum == d->dCtlRefNum) {
 			Dequeue((QElemPtr)dq, head);
-			DisposeHandle(d->dCtlStorage);
 		}
-		d->dCtlStorage = NULL;
+		c->offline = 1;
 		// Return disk offline error
 		return offLinErr;
 	}
@@ -219,9 +227,11 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	if (!d->dCtlStorage) { return offLinErr; }
 	// Dereference dCtlStorage to get pointer to our context
 	c = *(RDiskStorage_t**)d->dCtlStorage;
+	// Return disk offline error if marked offline
+	if (c->offline) { return offLinErr; }
 
 	// Initialize if this is the first prime call
-	if (!c->init_done) { 
+	if (!c->initialized) { 
 		OSErr ret = RDiskInit(p, d, c);
 		if (ret != noErr) { return ret; }
 	}
@@ -291,7 +301,7 @@ OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
 		case 21: case 22:
 			*(Ptr*)&p->csParam = (Ptr)&RDiskIcon;
 			return noErr;
-		case 128: c->mount = 1; return noErr;
+		case 128: c->forceMount = 1; return noErr;
 		default: return controlErr;
 	}
 }
@@ -303,6 +313,8 @@ OSErr RDiskStatus(CntrlParamPtr p, DCtlPtr d) {
 	if (!d->dCtlStorage) { return statusErr; }
 	// Dereference dCtlStorage to get pointer to our context
 	c = *(RDiskStorage_t**)d->dCtlStorage;
+	// Fail if offline
+	if (c->offline) { return statusErr; }
 	// Handle status request based on csCode
 	switch (p->csCode) {
 		case drvStsCode:
