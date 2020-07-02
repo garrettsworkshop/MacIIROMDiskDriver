@@ -38,10 +38,28 @@ typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
 typedef struct RDiskStorage_s {
 	DrvSts2 status;
 	char initialized;
-	char offline;
-	char forceMount;
+	char removed;
+	char postBoot;
 	char *ramdisk;
 	RDiskCopy_t copy24;
 } RDiskStorage_t;
+
+/*
+
+
+typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
+typedef void (*RDiskFormat_t)(Ptr);
+
+typedef struct RDiskStorage_s {
+	DrvSts2 status;
+	char initialized;
+	char removed;
+	char postBoot;
+	Ptr ramdisk;
+	char copy24[64] __attribute__ ((aligned (4))) ;
+	char format24[64] __attribute__ ((aligned (4))) ;
+} RDiskStorage_t;
+
+*/
 
 #endif

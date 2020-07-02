@@ -8,81 +8,107 @@
 
 #include "rdisk.h"
 
-const long RDiskIcon[65] = {
+const char RDiskIcon[285] = {
 	// Icon
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b11111111111111111111111111111111,
-	0b10000000000000000000000000000001,
-	0b10001111000111100011110001111001,
-	0b10001001000100100010010001001001,
-	0b10001001000100100010010001001001,
-	0b10001001000100100010010001001001,
-	0b10001111000111100011110001111001,
-	0b11000000000000000000000000000001,
-	0b01010101010101011101010101010101,
-	0b01111111111111110111111111111111,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b11111111, 0b11111111, 0b11111111, 0b11111111,
+	0b10000000, 0b00000000, 0b00000000, 0b00000001,
+	0b10001111, 0b00011110, 0b00111100, 0b01111001,
+	0b10001001, 0b00010010, 0b00100100, 0b01001001,
+	0b10001001, 0b00010010, 0b00100100, 0b01001001,
+	0b10001001, 0b00010010, 0b00100100, 0b01001001,
+	0b10001111, 0b00011110, 0b00111100, 0b01111001,
+	0b11000000, 0b00000000, 0b00000000, 0b00000001,
+	0b01010101, 0b01010101, 0b11010101, 0b01010101,
+	0b01111111, 0b11111111, 0b01111111, 0b11111111,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
 	// Mask
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0b11111111111111111111111111111111,
-	0b11111111111111111111111111111111,
-	0b11111111111111111111111111111111,
-	0b11111111111111111111111111111111,
-	0b11111111111111111111111111111111,
-	0b11111111111111111111111111111111,
-	0b11111111111111111111111111111111,
-	0b11111111111111111111111111111111,
-	0b01111111111111111111111111111111,
-	0b01111111111111111111111111111111,
-	0b00000000000000000000000000000000,
-	0b00000000000000000000000000000000,
-	0
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b11111111, 0b11111111, 0b11111111, 0b11111111,
+	0b11111111, 0b11111111, 0b11111111, 0b11111111,
+	0b11111111, 0b11111111, 0b11111111, 0b11111111,
+	0b11111111, 0b11111111, 0b11111111, 0b11111111,
+	0b11111111, 0b11111111, 0b11111111, 0b11111111,
+	0b11111111, 0b11111111, 0b11111111, 0b11111111,
+	0b11111111, 0b11111111, 0b11111111, 0b11111111,
+	0b11111111, 0b11111111, 0b11111111, 0b11111111,
+	0b01111111, 0b11111111, 0b11111111, 0b11111111,
+	0b01111111, 0b11111111, 0b11111111, 0b11111111,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	0b00000000, 0b00000000, 0b00000000, 0b00000000,
+	27, 'G', 'a', 'r', 'r', 'e', 't', 't', '\'', 's', ' ', 
+	'W', 'o', 'r', 'k', 's', 'h', 'o', 'p', ' ', 
+	'R', 'O', 'M', ' ', 'D', 'i', 's', 'k', 0
 };
 
-#pragma parameter __D0 RDiskBootCheckPRAM()
-short RDiskBootCheckPRAM() {
-	char mount;
-	RDiskReadXPRAM(1, 4, &mount);
-	return mount == 0x5D;
+static void RDiskDecodeSettings(RDiskStorage_t *c, char *enable, char* boot, char* mount, char* ram) {
+	char rKey, aKey, legacy_startup, legacy_ram;
+	// Read PRAM and keys
+	RDiskReadXPRAM(1, 4, &legacy_startup);
+	RDiskReadXPRAM(1, 5, &legacy_ram);
+	rKey = RDiskIsRPressed();
+	aKey = RDiskIsAPressed();
+	// Decode settings
+	if (c->postBoot) {
+		*enable = 1;
+		*boot = 1; // Boot set so first access works
+		*mount = 1;
+		*ram = 0;
+	} else if (rKey) { // R boots from ROM disk
+		*enable = 1;
+		*boot = 1;
+		*mount = 0;
+		*ram = aKey; // A enables RAM disk
+	} else if (legacy_startup) {
+		*enable = 1;
+		*boot = (legacy_startup & 0xFD) && (legacy_startup != 0xFD);
+		*mount = !*boot && legacy_startup & 0x02;
+		*ram = legacy_ram;
+	} else {
+		*enable = 0;
+		*boot = 0;
+		*mount = 0;
+		*ram = 0;
+	}
 }
 
 // Switch to 24-bit mode and copy
@@ -124,23 +150,23 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 
 	// Initialize storage struct fields
 	c->initialized = 0;
-	c->offline = 0;
-	c->forceMount = 0;
+	c->removed = 0;
+	c->postBoot = 0;
 	c->ramdisk = NULL;
 	c->copy24 = (RDiskCopy_t)copy24;
 
 	// Set drive status
 	c->status.writeProt = -1;
-	c->status.diskInPlace = 0x08;
+	c->status.diskInPlace = 8; // 8 means nonejectable disk
 	c->status.dQDrive = drvNum;
 	c->status.dQRefNum = d->dCtlRefNum;
 	c->status.driveSize = RDiskSize / 512;
 	c->status.driveS1 = (RDiskSize / 512) >> 16;
 
-	// Set driver flags?
-	/* d->dCtlFlags |= dReadEnableMask | dWritEnableMask | 
+	// Set driver flags
+	d->dCtlFlags |= dReadEnableMask | dWritEnableMask | 
 					dCtlEnableMask | dStatEnableMask | 
-					dNeedLockMask; // 0x4F */
+					dNeedLockMask; // 0x4F
 
 	// Add drive to drive queue and return
 	RDiskAddDrive(c->status.dQRefNum, drvNum, (DrvQElPtr)&c->status.qLink);
@@ -148,72 +174,79 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 }
 
 static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
-	char mount = 0, ram = 0;
+	char rdiskEN, mountEN, bootEN, ramEN;
 
 	// Mark init done
 	c->initialized = 1;
 
-	// Read PRAM
-	RDiskReadXPRAM(1, 4, &mount);
-	RDiskReadXPRAM(1, 5, &ram);
+	// Decode settings
+	RDiskDecodeSettings(c, &rdiskEN, &bootEN, &mountEN, &ramEN);
 
-	// Either enable ROM disk or remove ourselves from the drive queue
-	if (c->forceMount || mount || RDiskIsRPressed()) { // If ROM disk boot set in PRAM or R pressed,
-		// Set ROM disk attributes
-		c->status.writeProt = -1; // Set write protected
-		// If RAM disk set in PRAM or A pressed, enable RAM disk
-		if (ram || RDiskIsAPressed()) { // If RAM disk set in PRAM or A pressed
-			// Try to allocate RAM disk buffer
-			if (*MMU32bit) { // 32-bit mode
-				unsigned long minBufPtr, newBufPtr;
-				// Compute if there is enough high memory
-				minBufPtr = ((unsigned long)*MemTop / 2) + 1024;
-				newBufPtr = (unsigned long)*BufPtr - RDiskSize;	
-				if (newBufPtr > minBufPtr && (unsigned long)*BufPtr > newBufPtr) {
-					// Allocate RAM disk buffer by lowering BufPtra
-					*BufPtr = (Ptr)newBufPtr;
-					// Set RAM disk buffer pointer.
-					c->ramdisk = *BufPtr;
-					// Copy ROM disk image to RAM disk
-					BlockMove(RDiskBuf, c->ramdisk, RDiskSize);
-					// Clearing write protect marks RAM disk enabled
-					c->status.writeProt = 0;
-				} else {
-					// Not enough memory so stay write-only
-					c->status.writeProt = -1;
-				}
-			} else { // 24-bit mode
-				// Put RAM disk just past 8MB
-				c->ramdisk = (char*)(8 * 1024 * 1024);
-				// Copy ROM disk image to RAM disk
-				((RDiskCopy_t)StripAddress(c->copy24))(
-					RDiskBuf, StripAddress(c->ramdisk), RDiskSize);
-				// Clearing write protect marks RAM disk enabled
-				c->status.writeProt = 0;
-				//FIXME: what if we don't have enough RAM? 
-				// Will this wrap around and overwrite low memory?
-				// That's not the worst, since the system would just crash,
-				// but it would be better to switch to read-only status
-			}
-		}
-		return noErr;
-	} else { // Otherwise if R not held down and ROM boot not set in PRAM,
+	// If ROM disk not enabled, remove drive from drive queue
+	if (!rdiskEN) {
 		QHdrPtr head = GetDrvQHdr();
 		DrvQElPtr dq = (DrvQElPtr)head->qHead;
-		// Remove our driver from the drive queue
-		// Loop through entire drive queue, searching for our device
+		// Remove our drive from the system drive queue
+		// Loop through entire drive queue, searching for our deive
 		while ((dq != (DrvQElPtr)(head->qTail)) && 
 			   (dq->dQRefNum != d->dCtlRefNum)) {
 			dq = (DrvQElPtr)(dq->qLink);
 		}
-		// If we found our driver, remove it from the queue
+		// If we found our drive, remove it from the queue
 		if (dq->dQRefNum == d->dCtlRefNum) {
 			Dequeue((QElemPtr)dq, head);
 		}
-		c->offline = 1;
-		// Return disk offline error
+		// Mark drive removed and offline
+		c->removed = 1;
+		c->status.diskInPlace = 0; // 0 means no disk in drive
 		return offLinErr;
 	}
+
+	// If RAM disk enabled, try to allocate RAM disk buffer
+	if (ramEN) {
+		if (*MMU32bit) { // 32-bit mode
+			unsigned long minBufPtr, newBufPtr;
+			// Compute if there is enough high memory
+			minBufPtr = ((unsigned long)*MemTop / 2) + 1024;
+			newBufPtr = (unsigned long)*BufPtr - RDiskSize;	
+			if (newBufPtr > minBufPtr && (unsigned long)*BufPtr > newBufPtr) {
+				// Allocate RAM disk buffer by lowering BufPtr
+				*BufPtr = (Ptr)newBufPtr;
+				// Set RAM disk buffer pointer.
+				c->ramdisk = *BufPtr;
+				// Copy ROM disk image to RAM disk
+				BlockMove(RDiskBuf, c->ramdisk, RDiskSize);
+				// Clearing write protect marks RAM disk enabled
+				c->status.writeProt = 0;
+			} else { c->status.writeProt = -1; } // Not enough RAM. Stay write-only
+		} else { // 24-bit mode
+			// Put RAM disk just past 8MB
+			c->ramdisk = (char*)(8 * 1024 * 1024);
+			// Copy ROM disk image to RAM disk
+			((RDiskCopy_t)StripAddress(c->copy24))(
+				RDiskBuf, StripAddress(c->ramdisk), RDiskSize);
+			// Clearing write protect marks RAM disk enabled
+			c->status.writeProt = 0;
+			//FIXME: what if we don't have enough RAM? 
+			// Will this wrap around and overwrite low memory?
+			// That's not the worst, since the system would just crash,
+			// but it would be better to switch to read-only status
+		}
+	} else { c->status.writeProt = -1; } // Otherwise write-only
+
+	// If boot disabled...
+	if (!bootEN) {
+		// Set drive offline
+		c->status.diskInPlace = 0; // 0 means no disk in drive
+		// Enable accRun to post disk inserted event if mount enabled
+		if (mountEN) {
+			d->dCtlDelay = 150;
+			d->dCtlFlags |= dNeedTimeMask;
+		}
+		return offLinErr;
+	}
+
+	return noErr;
 }
 
 #pragma parameter __D0 RDiskPrime(__A0, __A1)
@@ -227,8 +260,8 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	if (!d->dCtlStorage) { return offLinErr; }
 	// Dereference dCtlStorage to get pointer to our context
 	c = *(RDiskStorage_t**)d->dCtlStorage;
-	// Return disk offline error if marked offline
-	if (c->offline) { return offLinErr; }
+	// Return disk offline error if virtual disk not inserted
+	if (!c->status.diskInPlace) { return offLinErr; }
 
 	// Initialize if this is the first prime call
 	if (!c->initialized) { 
@@ -246,10 +279,9 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 		default: break;
 	}
 	disk += offset;
-	//  Bounds checking
-	/*if (offset >= RDiskSize || p->ioReqCount >= RDiskSize || 
-		offset + p->ioReqCount >= RDiskSize || 
-		disk + offset < disk) { return posErr; }*/
+	//  Bounds checking disabled
+	if (offset >= RDiskSize || p->ioReqCount >= RDiskSize || 
+		offset + p->ioReqCount >= RDiskSize) { return posErr; }
 
 	// Service read or write request
 	cmd = p->ioTrap & 0x00FF;
@@ -297,11 +329,23 @@ OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
 	c = *(RDiskStorage_t**)d->dCtlStorage;
 	// Handle control request based on csCode
 	switch (p->csCode) {
-		case accRun: return noErr;
-		case 21: case 22:
+		case 6: // Format not implemented
+		case 5: return controlErr; // Verify (after format) not implemented
+		case accRun:
+			// Disable accRun
+			d->dCtlFlags &= ~dNeedTimeMask;
+			// If drive present in drive queue, set drive online
+			if (!c->removed) {
+				c->status.diskInPlace = 8; // 8 means nonejectable disk
+				PostEvent(diskEvt, c->status.dQDrive);
+			}
+			return noErr;
+		case 21: case 22: // Get icon
 			*(Ptr*)&p->csParam = (Ptr)&RDiskIcon;
 			return noErr;
-		case 128: c->forceMount = 1; return noErr;
+		case 128:
+			c->postBoot = 1;
+			return noErr;
 		default: return controlErr;
 	}
 }
@@ -313,12 +357,13 @@ OSErr RDiskStatus(CntrlParamPtr p, DCtlPtr d) {
 	if (!d->dCtlStorage) { return statusErr; }
 	// Dereference dCtlStorage to get pointer to our context
 	c = *(RDiskStorage_t**)d->dCtlStorage;
-	// Fail if offline
-	if (c->offline) { return statusErr; }
 	// Handle status request based on csCode
 	switch (p->csCode) {
 		case drvStsCode:
 			BlockMove(*d->dCtlStorage, &p->csParam, sizeof(DrvSts2));
+			return noErr;
+		case 128: // Get size
+			*((long*)p->csParam) = RDiskSize;
 			return noErr;
 		default: return statusErr;
 	}
