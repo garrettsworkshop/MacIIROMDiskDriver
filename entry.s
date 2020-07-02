@@ -7,24 +7,8 @@
 
 dc.l	0x00000000, 0x00000000, 0x00000000, 0x00000000
 dc.l	0x00000000, 0x00000000, 0x00000000, 0x00000000
-.ascii	"\9GWROMDisk\0"
+.ascii	"\RDisk\0"
 .align 4
-
-BootCheckEntry:
-	* Boot if reference number == -5
-	cmp 		#-5, 8(%A2)
-	beq.b 		BootCheckRet
-	* Otherwise don't boot if reference number != -50
-	cmp			#-50, 8(%A2)
-	bne.b		BootCheckRet
-	* Call to check PRAM
-	movem.l		%A0-%A7/%D0-%D7, -(%SP)
-	jsr			RDiskBootCheckPRAM
-	cmp			#0, %D0
-	movem.l		(%SP)+, %A0-%A7/%D0-%D7
-BootCheckRet:
-	rts
-	jmp BootCheckEntry
 
 DOpen:
 	movem.l		%A0-%A1, -(%SP)

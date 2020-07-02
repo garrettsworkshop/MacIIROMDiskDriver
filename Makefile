@@ -47,10 +47,6 @@ bin/driver.bin: bin obj/driver.o
 
 bin/rom.bin: baserom.bin RDisk1M5-6.dsk bin bin/driver.bin obj/driver_abs.sym obj/entry_rel.sym 
 	cp baserom.bin $@ # Copy base rom
-	# Patch boot
-	printf '\x4E' | dd of=$@ bs=1 seek=5888 count=1 conv=notrunc # Copy JSR opcode into IsFloppy boot routine
-	printf '\xF9' | dd of=$@ bs=1 seek=5889 count=1 conv=notrunc # Copy JSR opcode second byte
-	cat obj/driver_abs.sym | grep "BootCheckEntry" | cut -c1-8 | xxd -r -p - | dd of=$@ bs=1 seek=5890 count=4 conv=notrunc
 	# Patch driver
 	dd if=bin/driver.bin of=$@ bs=1 seek=335248 skip=32 conv=notrunc # Copy driver code
 	printf '\x78' | dd of=$@ bs=1 seek=335168 count=1 conv=notrunc # Set resource flags
