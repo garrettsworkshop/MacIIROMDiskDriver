@@ -45,7 +45,7 @@ bin/driver.bin: bin obj/driver.o
 	$(OBJCOPY) -O binary obj/driver.o $@
 
 
-bin/rom.bin: baserom.bin RDisk1M5.dsk bin bin/driver.bin obj/driver_abs.sym obj/entry_rel.sym 
+bin/rom.bin: baserom.bin RDisk1M5-6.dsk bin bin/driver.bin obj/driver_abs.sym obj/entry_rel.sym 
 	cp baserom.bin $@ # Copy base rom
 	# Patch boot
 	printf '\x4E' | dd of=$@ bs=1 seek=5888 count=1 conv=notrunc # Copy JSR opcode into IsFloppy boot routine
@@ -60,7 +60,7 @@ bin/rom.bin: baserom.bin RDisk1M5.dsk bin bin/driver.bin obj/driver_abs.sym obj/
 	cat obj/entry_rel.sym | grep "DControl" | cut -c5-8 | xxd -r -p - | dd of=$@ bs=1 seek=335228 count=2 conv=notrunc
 	cat obj/entry_rel.sym | grep "DStatus" | cut -c5-8 | xxd -r -p - | dd of=$@ bs=1 seek=335230 count=2 conv=notrunc
 	cat obj/entry_rel.sym | grep "DClose" | cut -c5-8 | xxd -r -p - | dd of=$@ bs=1 seek=335232 count=2 conv=notrunc
-	dd if=RDisk1M5.dsk of=$@ bs=1024 seek=512 count=1536 conv=notrunc # copy disk image
+	dd if=RDisk1M5-6.dsk of=$@ bs=1024 seek=512 count=1536 conv=notrunc # copy disk image
 
 .PHONY: clean
 clean:
