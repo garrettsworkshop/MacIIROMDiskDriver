@@ -149,10 +149,10 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	c = *(RDiskStorage_t**)d->dCtlStorage;
 
 	// Initialize storage struct fields
-	c->initialized = 0;
-	c->removed = 0;
-	c->postBoot = 0;
-	c->ramdisk = NULL;
+	//c->initialized = 0;
+	//c->removed = 0;
+	//c->postBoot = 0;
+	//c->ramdisk = NULL;
 	c->copy24 = (RDiskCopy_t)copy24;
 
 	// Set drive status
@@ -164,9 +164,9 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	c->status.driveS1 = (RDiskSize / 512) >> 16;
 
 	// Set driver flags
-	d->dCtlFlags |= dReadEnableMask | dWritEnableMask | 
+	/*d->dCtlFlags |= dReadEnableMask | dWritEnableMask | 
 					dCtlEnableMask | dStatEnableMask | 
-					dNeedLockMask; // 0x4F
+					dNeedLockMask;*/ // 0x4F
 
 	// Add drive to drive queue and return
 	RDiskAddDrive(c->status.dQRefNum, drvNum, (DrvQElPtr)&c->status.qLink);
@@ -218,7 +218,7 @@ static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 				BlockMove(RDiskBuf, c->ramdisk, RDiskSize);
 				// Clearing write protect marks RAM disk enabled
 				c->status.writeProt = 0;
-			} else { c->status.writeProt = -1; } // Not enough RAM. Stay write-only
+			}
 		} else { // 24-bit mode
 			// Put RAM disk just past 8MB
 			c->ramdisk = (char*)(8 * 1024 * 1024);
@@ -232,7 +232,7 @@ static OSErr RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			// That's not the worst, since the system would just crash,
 			// but it would be better to switch to read-only status
 		}
-	} else { c->status.writeProt = -1; } // Otherwise write-only
+	}
 
 	// If boot disabled...
 	if (!bootEN) {
@@ -329,8 +329,25 @@ OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
 	c = *(RDiskStorage_t**)d->dCtlStorage;
 	// Handle control request based on csCode
 	switch (p->csCode) {
-		case 6: // Format not implemented
-		case 5: return controlErr; // Verify (after format) not implemented
+		case 6: // Format
+			if (!c->status.diskInPlace || c->status.writeProt || !c->ramdisk) { 
+				return controlErr;
+			} else  {
+				char zero[64];
+				for (int i = 0; i < sizeof(zero); i++) { zero[i] = 0; }
+				for (int i = 0; i < RDiskSize / 64; i++) {
+					if (*MMU32bit) { BlockMove(zero, c->ramdisk, sizeof(zero)); }
+					else { 
+						((RDiskCopy_t)StripAddress(c->copy24))(
+							StripAddress(zero), c->ramdisk, sizeof(zero));
+					}
+				}
+			}
+			return noErr;
+		case 5: // Verify (after format)
+			if (!c->status.diskInPlace || c->status.writeProt || !c->ramdisk) { 
+				return controlErr;
+			} else { return noErr; }
 		case accRun:
 			// Disable accRun
 			d->dCtlFlags &= ~dNeedTimeMask;
