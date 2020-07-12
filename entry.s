@@ -56,11 +56,5 @@ ImmedRTS:
 	rts
 
 Queued:
-	tst.w		%D0
-	ble.b		MyIODone
-	clr.w		%D0
-	rts
-
-MyIODone:
 	move.l		JIODone, -(%SP)
 	rts

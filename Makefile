@@ -25,7 +25,7 @@ obj/entry_rel.sym: obj obj/entry.o
 
 
 obj/rdisk.o: rdisk.c obj
-	$(CC) -c -O1 $< -o $@
+	$(CC) -c -Os $< -o $@
 
 obj/rdisk.s: obj obj/rdisk.o
 	$(OBJDUMP) -d obj/rdisk.o > $@
