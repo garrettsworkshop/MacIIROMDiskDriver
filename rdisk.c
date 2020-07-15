@@ -290,8 +290,6 @@ static void RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 				c->status.writeProt = 0;
 			}
 		} else { // 24-bit mode
-			// Get address of copy24 routine 
-			RDiskCopy_t copy24 = (RDiskCopy_t)RDiskCopy24;
 			// Put RAM disk just past 8MB
 			c->ramdisk = (Ptr)(8 * 1024 * 1024);
 			// Copy ROM disk image to RAM disk
@@ -345,21 +343,13 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	if (cmd == aRdCmd) { // Read
 		// Read from disk into buffer.
 		if (*MMU32bit) { BlockMove(disk, p->ioBuffer, p->ioReqCount); }
-		else { 
-			// Get address of copy24 routine and then copy
-			RDiskCopy_t copy24 = (RDiskCopy_t)RDiskCopy24;
-			copy24(disk, StripAddress(p->ioBuffer), p->ioReqCount);
-		}
+		else { copy24(disk, StripAddress(p->ioBuffer), p->ioReqCount); }
 	} else if (cmd == aWrCmd) { // Write
 		// Fail if write protected or RAM disk buffer not set up
 		if (c->status.writeProt || !c->ramdisk) { return wPrErr; }
 		// Write from buffer into disk.
 		if (*MMU32bit) { BlockMove(p->ioBuffer, disk, p->ioReqCount); }
-		else { 
-			// Get address of copy24 routine and then copy
-			RDiskCopy_t copy24 = (RDiskCopy_t)RDiskCopy24;
-			copy24(StripAddress(p->ioBuffer), disk, p->ioReqCount);
-		}
+		else { copy24(StripAddress(p->ioBuffer), disk, p->ioReqCount); }
 	} else { return noErr; } //FIXME: Fail if cmd isn't read or write?
 
 	// Update count and position/offset, then return
@@ -385,11 +375,7 @@ OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
 			zero[0] = 0;
 			for (int i = 0; i < 256; i++) {
 				if (*MMU32bit) { BlockMove(zero, c->ramdisk, sizeof(zero)); }
-				else { 
-					// Get address of copy24 routine and then copy
-					RDiskCopy_t copy24 = (RDiskCopy_t)RDiskCopy24;
-					copy24((Ptr)zero, c->ramdisk, sizeof(zero));
-				}
+				else { copy24((Ptr)zero, c->ramdisk, sizeof(zero)); }
 			}
 			return noErr;
 		case kVerify:
