@@ -224,6 +224,11 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	// Do nothing if already opened
 	if (d->dCtlStorage) { return noErr; }
 
+	// Do nothing if inhibited
+	RDiskReadXPRAM(1, 4, &legacy_startup);
+	RDiskReadXPRAM(1, 5, &legacy_ram);
+	if ((legacy_startup & 0x07) == 0x04) { return noErr; } 
+
 	// Allocate storage struct
 	d->dCtlStorage = NewHandleSysClear(sizeof(RDiskStorage_t));
 	if (!d->dCtlStorage) { return openErr; }
