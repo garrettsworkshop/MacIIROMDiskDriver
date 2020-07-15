@@ -35,14 +35,14 @@ void RDiskBreak() = { 0xA9FF };
 
 typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
 
-//#define RDISK_COMPRESS_ICON
+//#define RDISK_COMPRESS_ICON_ENABLE
 typedef struct RDiskStorage_s {
 	DrvSts2 status;
 	char initialized;
 	char installed;
 	char postBoot;
 	Ptr ramdisk;
-	#ifdef RDISK_COMPRESS_ICON
+	#ifdef RDISK_COMPRESS_ICON_ENABLE
 	char icon[285];
 	#endif
 } RDiskStorage_t;
