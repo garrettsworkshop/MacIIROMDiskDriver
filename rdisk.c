@@ -167,32 +167,30 @@ const char const RDiskIcon[285] = {
 static void RDiskDecodeSettings(RDiskStorage_t *c, Ptr unmount, Ptr mount, Ptr ram) {
 	// Decode settings
 	if (c->postBoot) {
-		*unmount = 0;
-		*mount = 1;
+		*unmount = 0; // Don't unmount
+		*mount = 0; // No need to post event since it's already been done
 		*ram = 0;
 	} else if (RDiskIsRPressed()) { // R boots from ROM disk
-		*unmount = 0;
-		*mount = 0;
+		*unmount = 0; // Don't unmount so we boot from this drive
+		*mount = 0; // No need to mount later since we are boot disk
 		*ram = RDiskIsAPressed(); // A enables RAM disk
 	} else {
 		// Read PRAM
 		char legacy_startup, legacy_ram;
 		RDiskReadXPRAM(1, 4, &legacy_startup);
 		RDiskReadXPRAM(1, 5, &legacy_ram);
-		if (legacy_startup == 1) {
-			*unmount = 0;
-			*mount = 0;
-			*ram = legacy_ram;
-		} else if (legacy_startup == 2 || legacy_startup == 3 || 
-				   legacy_startup == 4 || legacy_startup == 5 || 
-				   legacy_startup == 6 || legacy_startup == 7) {
-			*unmount = 1;
-			*mount = 1;
+		if (legacy_startup & 1) {
+			*unmount = 0; // Don't unmount so we boot from this drive
+			*mount = 0; // No need to mount later since we are boot disk
+			*ram = legacy_ram & 1;
+		} else if (legacy_startup & 2) {
+			*unmount = 1; // Unmount to not boot from ouur disks
+			*mount = 1; // Mount in accRun
 			*ram = legacy_ram & 1;
 		} else {
-			*unmount = 1;
-			*mount = 0;
-			*ram = 0;
+			*unmount = 1; // Unmount
+			*mount = 0; // Don't mount again
+			*ram = 0; // Don't allocate RAM disk
 		}
 	}
 }
