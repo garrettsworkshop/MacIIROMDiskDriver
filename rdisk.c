@@ -420,8 +420,10 @@ OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
 		case 24: // Return SCSI partition size
 			*(long*)p->csParam = RDiskSize / 512;
 			return noErr;
-		case 2351: // Enable post-boot mode
-			c->postBoot = 1;
+		case 2351: // Post-boot
+			c->postBoot = 1; // Enable post-boot mode
+			d->dCtlFlags |= dNeedTimeMask; // Enable accRun
+			d->dCtlDelay = 150; // Set accRun delay (150 ticks is 2.5 sec.)
 			return noErr;
 		default: return controlErr;
 	}
