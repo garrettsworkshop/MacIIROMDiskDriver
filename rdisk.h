@@ -1,60 +1,42 @@
-#ifndef RDTRAPS_H
-#define RDTRAPS_H
+#ifndef RDISK_H
+#define RDISK_H
 
 #define RDiskSize (0x00180000L)
 #define RDiskBuf ((char*)0x40880000)
 #define BufPtr ((Ptr*)0x10C)
 #define MemTop ((Ptr*)0x108)
 #define MMU32bit ((char*)0xCB2)
-#define JIODone ((char*)0x8FC)
 
 #pragma parameter __D0 RDiskReadXPRAM(__D0, __D1, __A0)
-OSErr RDiskReadXPRAM(short numBytes, short whichByte, void *dest) = {0x4840, 0x3001, 0xA051};
+OSErr RDiskReadXPRAM(short numBytes, short whichByte, Ptr dest) = {0x4840, 0x3001, 0xA051};
 
-// Other definition of RDiskAddDrive with register calling convention
-//#pragma parameter __D0 RDiskAddDrive(__D1, __D0, __A0)
-//OSErr RDiskAddDrive(short numBytes, short whichByte, void *dest) = {0x4840, 0x3001, 0xA04E};
+#pragma parameter __D0 RDiskAddDrive(__D1, __D0, __A0)
+OSErr RDiskAddDrive(short drvrRefNum, short drvNum, DrvQElPtr dq) = {0x4840, 0x3001, 0xA04E};
 
-OSErr RDiskAddDrive(short drvrRefNum, short drvNum, DrvQElPtr dq) {
-	__asm__ __volatile__ (
-		"clr.l		%%D0		\n\t"
-		"move.w		%1,%%D0		\n\t"
-		"swap		%%D0		\n\t"
-		"move.w		%0,%%D0		\n\t"
-		"movea.l	%2,%%A0		\n\t"
-		".word  	0xA04E		\n\t"
-		: /* outputs */
-		: "g"(drvrRefNum), "g"(drvNum), "g"(dq) /* inputs */
-		: /* clobbered */);
-}
-
-inline char RDiskIsRPressed() { return *((char*)0x175) & 0x80; }
-inline char RDiskIsAPressed() { return *((char*)0x174) & 0x01; }
-
-void RDiskBreak() = { 0xA9FF };
+static inline char RDiskIsRPressed() { return *((char*)0x175) & 0x80; }
+static inline char RDiskIsAPressed() { return *((char*)0x174) & 0x01; }
 
 typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
+#define copy24(s, d, b) { RDiskCopy_t copy24 = (RDiskCopy_t)RDiskCopy24; copy24(s, d, b); }
 
 //#define RDISK_COMPRESS_ICON_ENABLE
+#define RDISK_ICON_SIZE (285)
 typedef struct RDiskStorage_s {
 	DrvSts2 status;
 	char initialized;
-	char installed;
-	char postBoot;
 	Ptr ramdisk;
 	#ifdef RDISK_COMPRESS_ICON_ENABLE
-	char icon[285];
+	char icon[RDISK_ICON_SIZE];
 	#endif
 } RDiskStorage_t;
 
-#define copy24(s, d, b) { RDiskCopy_t copy24 = (RDiskCopy_t)RDiskCopy24; copy24(s, d, b); }
-
-#define PackBits_Repeat(count) ((-1) * (count - 1))
+#define PackBits_Repeat(count) (-1 * (count - 1))
 #define PackBits_Literal(count) (count - 1)
 
+#define RDISK_COMPRESSED_ICON_SIZE (87)
 #ifdef RDISK_COMPRESS_ICON_ENABLE
 #include <Quickdraw.h>
-const char const RDiskIconCompressed[92] = {
+const char const RDiskIconCompressed[RDISK_COMPRESSED_ICON_SIZE] = {
 	PackBits_Repeat(76), 0b00000000, /*
 	0b00000000, 0b00000000, 0b00000000, 0b00000000,
 	0b00000000, 0b00000000, 0b00000000, 0b00000000,
@@ -77,8 +59,7 @@ const char const RDiskIconCompressed[92] = {
 	0b00000000, 0b00000000, 0b00000000, 0b00000000, */
 	PackBits_Repeat(4), 0b11111111, /*
 	0b11111111, 0b11111111, 0b11111111, 0b11111111, */
-	PackBits_Literal(40),
-	0b11111111, 0b11111111, 0b11111111, 0b11111111,
+	PackBits_Literal(36),
 	0b10000000, 0b00000000, 0b00000000, 0b00000001,
 	0b10001111, 0b00011110, 0b00111100, 0b01111001,
 	0b10001001, 0b00010010, 0b00100100, 0b01001001,
@@ -122,20 +103,23 @@ const char const RDiskIconCompressed[92] = {
 	0b11111111, 0b11111111, 0b11111111, 0b11111111,
 	0b11111111, 0b11111111, 0b11111111, 0b11111111,
 	0b11111111, 0b11111111, 0b11111111, 0b11111111, */
-	PackBits_Literal(8),
-	0b01111111, 0b11111111, 0b11111111, 0b11111111,
-	0b01111111, 0b11111111, 0b11111111, 0b11111111,
+	PackBits_Literal(1), 0b01111111, 
+	PackBits_Repeat(3), 0b11111111, /*
+	0b01111111, 0b11111111, 0b11111111, 0b11111111, */
+	PackBits_Literal(1), 0b01111111, 
+	PackBits_Repeat(3), 0b11111111, /*
+	0b01111111, 0b11111111, 0b11111111, 0b11111111, */
 	PackBits_Repeat(12), 0b00000000, /*
 	0b00000000, 0b00000000, 0b00000000, 0b00000000,
 	0b00000000, 0b00000000, 0b00000000, 0b00000000,
 	0b00000000, 0b00000000, 0b00000000, 0b00000000, */
-	(29 - 1),
+	PackBits_Literal(29),
 	27, 'G', 'a', 'r', 'r', 'e', 't', 't', '\'', 's', ' ', 
 	'W', 'o', 'r', 'k', 's', 'h', 'o', 'p', ' ', 
 	'R', 'O', 'M', ' ', 'D', 'i', 's', 'k', 0
 };
 #else
-const char const RDiskIcon[285] = {
+const char const RDiskIcon[RDISK_ICON_SIZE] = {
 	// Icon
 	0b00000000, 0b00000000, 0b00000000, 0b00000000,
 	0b00000000, 0b00000000, 0b00000000, 0b00000000,

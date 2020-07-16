@@ -8,13 +8,10 @@
 
 #include "rdisk.h"
 
+// Decode keyboard/PRAM settings
 static void RDiskDecodeSettings(RDiskStorage_t *c, Ptr unmount, Ptr mount, Ptr ram) {
 	// Decode settings
-	if (c->postBoot) {
-		*unmount = 0; // Don't unmount
-		*mount = 0; // No need to post event since it's already been done
-		*ram = 0;
-	} else if (RDiskIsRPressed()) { // R boots from ROM disk
+	if (RDiskIsRPressed()) { // R boots from ROM disk
 		*unmount = 0; // Don't unmount so we boot from this drive
 		*mount = 0; // No need to mount later since we are boot disk
 		*ram = RDiskIsAPressed(); // A enables RAM disk
@@ -23,12 +20,12 @@ static void RDiskDecodeSettings(RDiskStorage_t *c, Ptr unmount, Ptr mount, Ptr r
 		char legacy_startup, legacy_ram;
 		RDiskReadXPRAM(1, 4, &legacy_startup);
 		RDiskReadXPRAM(1, 5, &legacy_ram);
-		if (legacy_startup & 1) {
+		if (legacy_startup & 1) { // Boot from ROM disk
 			*unmount = 0; // Don't unmount so we boot from this drive
 			*mount = 0; // No need to mount later since we are boot disk
 			*ram = legacy_ram & 1;
-		} else if (legacy_startup & 2) {
-			*unmount = 1; // Unmount to not boot from ouur disks
+		} else if (legacy_startup & 2) { // Mount ROM disk
+			*unmount = 1; // Unmount to not boot from our disk
 			*mount = 1; // Mount in accRun
 			*ram = legacy_ram & 1;
 		} else {
@@ -40,6 +37,7 @@ static void RDiskDecodeSettings(RDiskStorage_t *c, Ptr unmount, Ptr mount, Ptr r
 }
 
 // Switch to 32-bit mode and copy
+#pragma parameter RDiskCopy24(__A0, __A1, __D0)
 void RDiskCopy24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 	char mode = true32b;
 	SwapMMUMode(&mode);
@@ -83,23 +81,23 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	drvNum = RDiskFindDrvNum();
 
 	// Set drive status
-	c->status.track = 0;
+	//c->status.track = 0;
 	c->status.writeProt = -1; // nonzero is write protected
 	c->status.diskInPlace = 8; // 8 is nonejectable disk
 	c->status.installed = 1; // drive installed
-	c->status.sides = 0; // drive installed
-	c->status.qType = 1;
+	//c->status.sides = 0;
+	//c->status.qType = 1;
 	c->status.dQDrive = drvNum;
-	c->status.dQFSID = 0;
+	//c->status.dQFSID = 0;
 	c->status.dQRefNum = d->dCtlRefNum;
 	c->status.driveSize = RDiskSize / 512;
-	c->status.driveS1 = (RDiskSize / 512) >> 16;
+	//c->status.driveS1 = (RDiskSize / 512) >> 16;
 
-	#ifdef RDISK_COMPRESS_ICON_ENABLE
 	// Decompress icon
+	#ifdef RDISK_COMPRESS_ICON_ENABLE
 	char *src = &RDiskIconCompressed[0];
 	char *dst = &c->icon[0];
-	UnpackBits(&src, &dst, 285);
+	UnpackBits(&src, &dst, RDISK_ICON_SIZE);
 	#endif
 
 	// Add drive to drive queue and return
@@ -107,12 +105,11 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	return noErr;
 }
 
+// Init is called at beginning of first prime (read/write) call
 static void RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	char unmountEN, mountEN, ramEN;
-
 	// Mark init done
 	c->initialized = 1;
-
 	// Decode settings
 	RDiskDecodeSettings(c, &unmountEN, &mountEN, &ramEN);
 
@@ -148,14 +145,12 @@ static void RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	}
 
 	// Unmount if not booting from ROM disk
-	if (unmountEN) {
-		c->status.diskInPlace = 0; // 0 == no disk in drive
-	}
+	if (unmountEN) { c->status.diskInPlace = 0; }
 
 	// If mount enabled, enable accRun to post disk inserted event later
 	if (mountEN) { 
-		d->dCtlFlags |= dNeedTimeMask; // Enable accRun
 		d->dCtlDelay = 150; // Set accRun delay (150 ticks is 2.5 sec.)
+		d->dCtlFlags |= dNeedTimeMask; // Enable accRun
 	}
 }
 
@@ -211,25 +206,25 @@ OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
 	c = *(RDiskStorage_t**)d->dCtlStorage;
 	// Handle control request based on csCode
 	switch (p->csCode) {
+		case killCode:
+			return noErr;
 		case kFormat:
-			if (!c->status.diskInPlace || c->status.writeProt || !c->ramdisk) {
-				return controlErr;
-			} 
-			long zero[16];
-			zero[0] = 0;
-			for (int i = 0; i < 256; i++) {
-				if (*MMU32bit) { BlockMove(zero, c->ramdisk, sizeof(zero)); }
-				else { copy24((Ptr)zero, c->ramdisk, sizeof(zero)); }
+			if (!c->status.diskInPlace || c->status.writeProt ||
+				!c->ramdisk) { return controlErr; } 
+			long zero[32];
+			for (int i = 0; i < 32; i++) { zero[i] = 0; }
+			for (int i = 0; i < 32; i++) {
+				copy24((Ptr)zero, c->ramdisk + i * sizeof(zero), sizeof(zero));
 			}
 			return noErr;
 		case kVerify:
 			if (!c->status.diskInPlace) { return controlErr; }
 			return noErr;
-		case killCode:
-			return noErr;
 		case kEject:
 			// "Reinsert" disk if ejected illegally
-			if (c->installed) { PostEvent(diskEvt, c->status.dQDrive); }
+			if (c->status.diskInPlace) { 
+				PostEvent(diskEvt, c->status.dQDrive);
+			}
 			return controlErr; // Eject not allowed so return error
 		case accRun:
 			d->dCtlFlags &= ~dNeedTimeMask; // Disable accRun
@@ -254,9 +249,9 @@ OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
 			*(long*)p->csParam = RDiskSize / 512;
 			return noErr;
 		case 2351: // Post-boot
-			c->postBoot = 1; // Enable post-boot mode
+			c->initialized = 1; // Skip initialization
+			d->dCtlDelay = 30; // Set accRun delay (30 ticks is 0.5 sec.)
 			d->dCtlFlags |= dNeedTimeMask; // Enable accRun
-			d->dCtlDelay = 150; // Set accRun delay (150 ticks is 2.5 sec.)
 			return noErr;
 		default: return controlErr;
 	}
@@ -280,7 +275,7 @@ OSErr RDiskStatus(CntrlParamPtr p, DCtlPtr d) {
 
 #pragma parameter __D0 RDiskClose(__A0, __A1)
 OSErr RDiskClose(IOParamPtr p, DCtlPtr d) {
-	// If dCtlStorage not null, dispose of it and its contents
+	// If dCtlStorage not null, dispose of it
 	if (!d->dCtlStorage) { return noErr; }
 	RDiskStorage_t *c = *(RDiskStorage_t**)d->dCtlStorage;
 	HUnlock(d->dCtlStorage);
