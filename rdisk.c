@@ -242,8 +242,8 @@ OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
 			//  high word (bytes 2 & 3) clear
 			//  byte 1 = primary + fixed media + internal
 			//  byte 0 = drive type (0x10 is RAM disk) / (0x11 is ROM disk)
-			if (c->status.writeProt) { *(long*)p->csParam = 0x00000410; }
-			else { *(long*)p->csParam = 0x00000411; }
+			if (c->status.writeProt) { *(long*)p->csParam = 0x00000411; }
+			else { *(long*)p->csParam = 0x00000410; }
 			return noErr;
 		case 24: // Return SCSI partition size
 			*(long*)p->csParam = RDiskSize / 512;
