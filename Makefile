@@ -8,7 +8,7 @@ LD=$(RETRO68)/bin/m68k-apple-macos-ld
 OBJCOPY=$(RETRO68)/bin/m68k-apple-macos-objcopy
 OBJDUMP=$(RETRO68)/bin/m68k-apple-macos-objdump
 
-all: bin/rom16M_swap.bin obj/rdisk1M5.s obj/rdisk7M5.s obj/driver1M5.s obj/driver7M5.s obj/entry_rel.sym obj/driver_abs.sym
+all: bin/rom2M_swap.bin bin/rom16M_swap.bin obj/rdisk1M5.s obj/rdisk7M5.s obj/driver1M5.s obj/driver7M5.s obj/entry_rel.sym obj/driver_abs.sym
 
 obj:
 	mkdir obj
@@ -60,7 +60,7 @@ bin/driver7M5.bin: bin obj/driver7M5.o
 	$(OBJCOPY) -O binary obj/driver7M5.o $@
 
 
-bin/rom2M.bin: baserom.bin RDisk1M5.dsk bin bin/driver1M5.bin obj/driver_abs.sym obj/entry_rel.sym 
+bin/rom2M.bin: bin baserom.bin RDisk1M5.dsk bin bin/driver1M5.bin obj/driver_abs.sym obj/entry_rel.sym 
 	cp baserom.bin $@ # Copy base rom
 	# Patch driver
 	dd if=bin/driver1M5.bin of=$@ bs=1 seek=335248 skip=32 conv=notrunc # Copy driver code
@@ -73,7 +73,7 @@ bin/rom2M.bin: baserom.bin RDisk1M5.dsk bin bin/driver1M5.bin obj/driver_abs.sym
 	cat obj/entry_rel.sym | grep "DClose" | cut -c5-8 | xxd -r -p - | dd of=$@ bs=1 seek=335232 count=2 conv=notrunc
 	dd if=RDisk1M5.dsk of=$@ bs=1024 seek=512 count=1536 conv=notrunc # copy disk image
 
-bin/rom8M.bin: baserom.bin RDisk7M5.dsk bin bin/driver7M5.bin obj/driver_abs.sym obj/entry_rel.sym 
+bin/rom8M.bin: bin baserom.bin RDisk7M5.dsk bin bin/driver7M5.bin obj/driver_abs.sym obj/entry_rel.sym 
 	cp baserom.bin $@ # Copy base rom
 	# Patch driver
 	dd if=bin/driver7M5.bin of=$@ bs=1 seek=335248 skip=32 conv=notrunc # Copy driver code
@@ -86,15 +86,18 @@ bin/rom8M.bin: baserom.bin RDisk7M5.dsk bin bin/driver7M5.bin obj/driver_abs.sym
 	cat obj/entry_rel.sym | grep "DClose" | cut -c5-8 | xxd -r -p - | dd of=$@ bs=1 seek=335232 count=2 conv=notrunc
 	dd if=RDisk7M5.dsk of=$@ bs=1024 seek=512 count=7680 conv=notrunc # copy disk image
 
-bin/rom8M_swap.bin: bin/rom8M.bin
+bin/rom8M_swap.bin: bin bin/rom8M.bin
 	dd if=bin/rom8M.bin of=$@ conv=swab # swap bytes
 
-bin/rom2M_swap.bin: bin/rom2M.bin
+bin/rom2M_swap.bin: bin bin/rom2M.bin
 	dd if=bin/rom2M.bin of=$@ conv=swab # swap bytes
 
-bin/rom16M_swap.bin: bin/rom2M_swap.bin bin/rom8M_swap.bin
+bin/iisi_swap.bin: bin iisi.bin
+	dd if=iisi.bin of=$@ conv=swab # swap bytes
+
+bin/rom16M_swap.bin: bin/iisi_swap.bin bin/rom8M_swap.bin
 	cat bin/rom8M_swap.bin > $@
-	cat bin/rom2M_swap.bin >> $@
+	cat bin/iisi_swap.bin >> $@
 
 
 .PHONY: clean
