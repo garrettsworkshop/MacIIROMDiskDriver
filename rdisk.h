@@ -126,7 +126,7 @@ const char const RDiskIconCompressed[RDISK_COMPRESSED_ICON_SIZE] = {
 	'R', 'O', 'M', ' ', 'D', 'i', 's', 'k', 0
 };
 #else
-const char const RDiskIcon[RDISK_ICON_SIZE] = {
+const char RDiskIcon[RDISK_ICON_SIZE] = {
 	// Icon
 	0b00000000, 0b00000000, 0b00000000, 0b00000000,
 	0b00000000, 0b00000000, 0b00000000, 0b00000000,

@@ -50,7 +50,7 @@ static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, P
 // Switch to 32-bit mode and copy
 #pragma parameter RDCopy24(__A0, __A1, __D0)
 void RDCopy24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
-	char mode = true32b;
+	signed char mode = true32b;
 	SwapMMUMode(&mode);
 	BlockMove(sourcePtr, destPtr, byteCount);
 	SwapMMUMode(&mode);
@@ -295,11 +295,11 @@ OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 
 #pragma parameter __D0 RDStat(__A0, __A1)
 OSErr RDStat(CntrlParamPtr p, DCtlPtr d) {
-	RDiskStorage_t *c;
+	//RDiskStorage_t *c;
 	// Fail if dCtlStorage null
 	if (!d->dCtlStorage) { return notOpenErr; }
 	// Dereference dCtlStorage to get pointer to our context
-	c = *(RDiskStorage_t**)d->dCtlStorage;
+	//c = *(RDiskStorage_t**)d->dCtlStorage;
 	// Handle status request based on csCode
 	switch (p->csCode) {
 		case kDriveStatus:
@@ -313,7 +313,7 @@ OSErr RDStat(CntrlParamPtr p, DCtlPtr d) {
 OSErr RDClose(IOParamPtr p, DCtlPtr d) {
 	// If dCtlStorage not null, dispose of it
 	if (!d->dCtlStorage) { return noErr; }
-	RDiskStorage_t *c = *(RDiskStorage_t**)d->dCtlStorage;
+	//RDiskStorage_t *c = *(RDiskStorage_t**)d->dCtlStorage;
 	HUnlock(d->dCtlStorage);
 	DisposeHandle(d->dCtlStorage);
 	d->dCtlStorage = NULL;
