@@ -66,7 +66,7 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 
 	// Do nothing if inhibited
 	RDiskReadXPRAM(1, 4, &legacy_startup);
-	if ((legacy_startup & 0x07) == 0x04) { return noErr; } 
+	if (legacy_startup & 0x80) { return noErr; } 
 
 	// Allocate storage struct
 	d->dCtlStorage = NewHandleSysClear(sizeof(RDiskStorage_t));
