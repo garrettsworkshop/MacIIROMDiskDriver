@@ -1,12 +1,12 @@
 # path to RETRO68
 RETRO68=/Users/zane/Retro68-build/toolchain
 
-PREFIX=$(RETRO68)/m68k-apple-macos
-AS=$(RETRO68)/bin/m68k-apple-macos-as
-CC=$(RETRO68)/bin/m68k-apple-macos-gcc
-LD=$(RETRO68)/bin/m68k-apple-macos-ld
-OBJCOPY=$(RETRO68)/bin/m68k-apple-macos-objcopy
-OBJDUMP=$(RETRO68)/bin/m68k-apple-macos-objdump
+PREFIX=$(RETRO68)/bin/m68k-apple-macos
+AS=$(PREFIX)-as
+CC=$(PREFIX)-gcc
+LD=$(PREFIX)-ld
+OBJCOPY=$(PREFIX)-objcopy
+OBJDUMP=$(PREFIX)-objdump
 
 all: bin/rom16M_swap.bin obj/rdisk7M5.s obj/driver7M5.s obj/entry_rel.sym obj/driver_abs.sym
 
