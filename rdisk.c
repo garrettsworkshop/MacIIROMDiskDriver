@@ -59,14 +59,13 @@ static int RDiskFindDrvNum() {
 OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	int drvNum;
 	RDiskStorage_t *c;
-	char legacy_startup, legacy_ram;
+	char legacy_startup;
 
 	// Do nothing if already opened
 	if (d->dCtlStorage) { return noErr; }
 
 	// Do nothing if inhibited
 	RDiskReadXPRAM(1, 4, &legacy_startup);
-	RDiskReadXPRAM(1, 5, &legacy_ram);
 	if ((legacy_startup & 0x07) == 0x04) { return noErr; } 
 
 	// Allocate storage struct
