@@ -199,12 +199,32 @@ OSErr RDPrime(IOParamPtr p, DCtlPtr d) {
 		// Read from disk into buffer.
 		if (*MMU32bit) { BlockMove(disk, p->ioBuffer, p->ioReqCount); }
 		else { copy24(disk, StripAddress(p->ioBuffer), p->ioReqCount); }
+
+		if (!c->dbgEN && !c->dbgOverwrite && 
+			*RDiskDBGDisPos >= d->dCtlPosition && 
+			*RDiskDBGDisPos < d->dCtlPosition + p->ioReqCount) {
+			p->ioBuffer[*RDiskDBGDisPos - d->dCtlPosition] = *RDiskDBGDisByte;
+		}
+		if (!c->cdromEN && !c->cdromOverwrite && 
+			*RDiskCDROMDisPos >= d->dCtlPosition && 
+			*RDiskCDROMDisPos < d->dCtlPosition + p->ioReqCount) {
+			p->ioBuffer[*RDiskCDROMDisPos - d->dCtlPosition] = *RDiskCDROMDisByte;
+		}
 	} else if (cmd == aWrCmd) { // Write
 		// Fail if write protected or RAM disk buffer not set up
 		if (c->status.writeProt || !c->ramdisk) { return wPrErr; }
 		// Write from buffer into disk.
 		if (*MMU32bit) { BlockMove(p->ioBuffer, disk, p->ioReqCount); }
 		else { copy24(StripAddress(p->ioBuffer), disk, p->ioReqCount); }
+
+		if (*RDiskDBGDisPos >= d->dCtlPosition && 
+			*RDiskDBGDisPos < d->dCtlPosition + p->ioReqCount) {
+			c->dbgOverwrite = 1;
+		}
+		if (*RDiskCDROMDisPos >= d->dCtlPosition && 
+			*RDiskCDROMDisPos < d->dCtlPosition + p->ioReqCount) {
+			c->cdromOverwrite = 1;
+		}
 	} else { return noErr; } //FIXME: Fail if cmd isn't read or write?
 
 	// Update count and position/offset, then return
