@@ -4,12 +4,34 @@
 .EQU	kioResult,	16
 .EQU	kcsCode,	26
 .EQU	JIODone,	0x08FC
+.GLOBAL RDiskSig
+.GLOBAL RDiskDBGNamePos
+.GLOBAL RDiskDBGDisPos
+.GLOBAL RDiskDBGDisByte
+.GLOBAL RDiskCDROMNamePos
+.GLOBAL RDiskCDROMDisPos
+.GLOBAL RDiskCDROMDisByte
 
 dc.l	0x00000000, 0x00000000, 0x00000000, 0x00000000
 dc.l	0x00000000, 0x00000000, 0x00000000, 0x00000000
+
+RDiskSig:
 .ascii	"\5RDisk\0"
 .align 4
+RDiskDBGDisPos:
+dc.l 0x000106DA
+RDiskCDROMDisPos:
+dc.l 0x00012C96
+RDiskDBGNamePos:
+dc.l 0x4088002A
+RDiskCDROMNamePos:
+dc.l 0x40892C96
+RDiskDBGDisByte:
+dc.b 0x44
+RDiskCDROMDisByte:
+dc.b 0x44
 
+.align 4
 DOpen:
 	movem.l		%A0-%A1, -(%SP)
 	bsr			RDOpen

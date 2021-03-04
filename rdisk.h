@@ -2,6 +2,10 @@
 #define RDISK_H
 
 #define RDiskBuf ((char*)0x40880000)
+extern uint32_t *RDiskDBGDisPos;
+extern char *RDiskDBGDisByte;
+extern uint32_t *RDiskCDROMDisPos;
+extern char *RDiskCDROMDisByte;
 #define BufPtr ((Ptr*)0x10C)
 #define MemTop ((Ptr*)0x108)
 #define MMU32bit ((char*)0xCB2)
