@@ -16,7 +16,7 @@ static inline char RDiskIsRPressed() { return *((char*)0x175) & 0x80; }
 static inline char RDiskIsAPressed() { return *((char*)0x174) & 0x01; }
 
 typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
-#define copy24(s, d, b) { RDiskCopy_t copy24 = (RDiskCopy_t)RDiskCopy24; copy24(s, d, b); }
+#define copy24(s, d, b) { RDiskCopy_t copy24 = (RDiskCopy_t)RDCopy24; copy24(s, d, b); }
 
 //#define RDISK_COMPRESS_ICON_ENABLE
 #define RDISK_ICON_SIZE (285)

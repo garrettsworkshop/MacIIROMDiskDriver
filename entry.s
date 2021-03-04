@@ -12,25 +12,25 @@ dc.l	0x00000000, 0x00000000, 0x00000000, 0x00000000
 
 DOpen:
 	movem.l		%A0-%A1, -(%SP)
-	bsr			RDiskOpen
+	bsr			RDOpen
 	movem.l		(%SP)+, %A0-%A1
 	rts
 
 DClose:
 	movem.l		%A0-%A1, -(%SP)
-	bsr			RDiskClose
+	bsr			RDClose
 	movem.l		(%SP)+, %A0-%A1
 	rts
 
 DPrime:
 	movem.l		%A0-%A1, -(%SP)
-	bsr			RDiskPrime
+	bsr			RDPrime
 	movem.l		(%SP)+, %A0-%A1
 	bra.b		IOReturn
 
 DControl:
 	movem.l		%A0-%A1, -(%SP)
-	bsr			RDiskControl
+	bsr			RDCtl
 	movem.l		(%SP)+, %A0-%A1
 	cmpi.w		#killCode, kcsCode(%A0)
 	bne.b		IOReturn
@@ -38,7 +38,7 @@ DControl:
 
 DStatus:
 	movem.l		%A0-%A1, -(%SP)
-	bsr			RDiskStatus
+	bsr			RDStat
 	movem.l		(%SP)+, %A0-%A1
 
 IOReturn:

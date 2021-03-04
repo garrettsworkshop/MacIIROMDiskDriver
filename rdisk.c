@@ -37,8 +37,8 @@ static void RDiskDecodeSettings(RDiskStorage_t *c, Ptr unmount, Ptr mount, Ptr r
 }
 
 // Switch to 32-bit mode and copy
-#pragma parameter RDiskCopy24(__A0, __A1, __D0)
-void RDiskCopy24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
+#pragma parameter RDCopy24(__A0, __A1, __D0)
+void RDCopy24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 	char mode = true32b;
 	SwapMMUMode(&mode);
 	BlockMove(sourcePtr, destPtr, byteCount);
@@ -46,7 +46,7 @@ void RDiskCopy24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 }
 
 // Figure out the first available drive number >= 5
-static int RDiskFindDrvNum() {
+static int RDFindDrvNum() {
 	DrvQElPtr dq;
 	int drvNum = 5;
 	for (dq = (DrvQElPtr)(GetDrvQHdr())->qHead; dq; dq = (DrvQElPtr)dq->qLink) {
@@ -55,8 +55,8 @@ static int RDiskFindDrvNum() {
 	return drvNum;
 }
 
-#pragma parameter __D0 RDiskOpen(__A0, __A1)
-OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
+#pragma parameter __D0 RDOpen(__A0, __A1)
+OSErr RDOpen(IOParamPtr p, DCtlPtr d) {
 	int drvNum;
 	RDiskStorage_t *c;
 	char legacy_startup;
@@ -77,7 +77,7 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 	c = *(RDiskStorage_t**)d->dCtlStorage;
 
 	// Find first available drive number
-	drvNum = RDiskFindDrvNum();
+	drvNum = RDFindDrvNum();
 
 	// Set drive status
 	//c->status.track = 0;
@@ -105,8 +105,8 @@ OSErr RDiskOpen(IOParamPtr p, DCtlPtr d) {
 }
 
 // Init is called at beginning of first prime (read/write) call
-static void RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	char unmountEN, mountEN, ramEN;
+static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Mark init done
 	c->initialized = 1;
 	// Decode settings
@@ -153,8 +153,8 @@ static void RDiskInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	}
 }
 
-#pragma parameter __D0 RDiskPrime(__A0, __A1)
-OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
+#pragma parameter __D0 RDPrime(__A0, __A1)
+OSErr RDPrime(IOParamPtr p, DCtlPtr d) {
 	RDiskStorage_t *c;
 	char cmd;
 	Ptr disk;
@@ -165,7 +165,7 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	c = *(RDiskStorage_t**)d->dCtlStorage;
 
 	// Initialize if this is the first prime call
-	if (!c->initialized) { RDiskInit(p, d, c); }
+	if (!c->initialized) { RDInit(p, d, c); }
 
 	// Return disk offline error if virtual disk not inserted
 	if (!c->status.diskInPlace) { return offLinErr; }
@@ -196,8 +196,8 @@ OSErr RDiskPrime(IOParamPtr p, DCtlPtr d) {
 	return noErr;
 }
 
-#pragma parameter __D0 RDiskControl(__A0, __A1)
-OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
+#pragma parameter __D0 RDCtl(__A0, __A1)
+OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 	RDiskStorage_t *c;
 	// Fail if dCtlStorage null
 	if (!d->dCtlStorage) { return notOpenErr; }
@@ -256,8 +256,8 @@ OSErr RDiskControl(CntrlParamPtr p, DCtlPtr d) {
 	}
 }
 
-#pragma parameter __D0 RDiskStatus(__A0, __A1)
-OSErr RDiskStatus(CntrlParamPtr p, DCtlPtr d) {
+#pragma parameter __D0 RDStat(__A0, __A1)
+OSErr RDStat(CntrlParamPtr p, DCtlPtr d) {
 	RDiskStorage_t *c;
 	// Fail if dCtlStorage null
 	if (!d->dCtlStorage) { return notOpenErr; }
@@ -272,8 +272,8 @@ OSErr RDiskStatus(CntrlParamPtr p, DCtlPtr d) {
 	}
 }
 
-#pragma parameter __D0 RDiskClose(__A0, __A1)
-OSErr RDiskClose(IOParamPtr p, DCtlPtr d) {
+#pragma parameter __D0 RDClose(__A0, __A1)
+OSErr RDClose(IOParamPtr p, DCtlPtr d) {
 	// If dCtlStorage not null, dispose of it
 	if (!d->dCtlStorage) { return noErr; }
 	RDiskStorage_t *c = *(RDiskStorage_t**)d->dCtlStorage;
