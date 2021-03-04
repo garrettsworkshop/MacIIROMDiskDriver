@@ -9,31 +9,42 @@
 #include "rdisk.h"
 
 // Decode keyboard/PRAM settings
-static void RDiskDecodeSettings(RDiskStorage_t *c, Ptr unmount, Ptr mount, Ptr ram) {
-	// Decode settings
+static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, Ptr cdromEN) {
+	// Read PRAM
+	char legacy_startup, legacy_ram;
+	RDiskReadXPRAM(1, 4, &legacy_startup);
+	RDiskReadXPRAM(1, 5, &legacy_ram);
+
+	// Decode settings: unmount (don't boot), mount (after boot), RAM disk
 	if (RDiskIsRPressed()) { // R boots from ROM disk
-		*unmount = 0; // Don't unmount so we boot from this drive
-		*mount = 0; // No need to mount later since we are boot disk
-		*ram = RDiskIsAPressed(); // A enables RAM disk
+		*unmountEN = 0; // Don't unmount so we boot from this drive
+		*mountEN = 0; // No need to mount later since we are boot disk
+		*ramEN = RDiskIsAPressed(); // A enables RAM disk
 	} else {
-		// Read PRAM
-		char legacy_startup, legacy_ram;
-		RDiskReadXPRAM(1, 4, &legacy_startup);
-		RDiskReadXPRAM(1, 5, &legacy_ram);
-		if (legacy_startup & 1) { // Boot from ROM disk
-			*unmount = 0; // Don't unmount so we boot from this drive
-			*mount = 0; // No need to mount later since we are boot disk
-			*ram = legacy_ram & 1;
-		} else if (legacy_startup & 2) { // Mount ROM disk
-			*unmount = 1; // Unmount to not boot from our disk
-			*mount = 1; // Mount in accRun
-			*ram = legacy_ram & 1;
+		if (legacy_startup & 0x01) { // Boot from ROM disk
+			*unmountEN = 0; // Don't unmount so we boot from this drive
+			*mountEN = 0; // No need to mount later since we are boot disk
+			*ramEN = legacy_ram & 0x01;
+		} else if (legacy_startup & 0x02) { // Mount ROM disk
+			*unmountEN = 1; // Unmount to not boot from our disk
+			*mountEN = 1; // Mount in accRun
+			*ramEN = legacy_ram & 0x01;
 		} else {
-			*unmount = 1; // Unmount
-			*mount = 0; // Don't mount again
-			*ram = 0; // Don't allocate RAM disk
+			*unmountEN = 1; // Unmount
+			*mountEN = 0; // Don't mount again
+			*ramEN = 0; // Don't allocate RAM disk
 		}
 	}
+
+	// MacsBug enabled if bit 3 == 1 or DBGDis addr invalid or not boot
+	*dbgEN = *unmountEN ||
+		(legacy_startup & 0x04) || 
+		(*RDiskDBGDisPos == 0);
+
+	// CDROM enabled if bit 3 == 0 or CDROMDis addr invalid or not boot
+	*cdromEN = *unmountEN ||
+		!(legacy_startup & 0x08) || 
+		(*RDiskCDROMDisPos == 0);
 }
 
 // Switch to 32-bit mode and copy
@@ -105,12 +116,18 @@ OSErr RDOpen(IOParamPtr p, DCtlPtr d) {
 }
 
 // Init is called at beginning of first prime (read/write) call
-	char unmountEN, mountEN, ramEN;
 static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
+	char unmountEN, mountEN, ramEN, dbgEN, cdromEN;
 	// Mark init done
 	c->initialized = 1;
 	// Decode settings
-	RDiskDecodeSettings(c, &unmountEN, &mountEN, &ramEN);
+	RDDecodeSettings(&unmountEN, &mountEN, &ramEN, &dbgEN, &cdromEN);
+	// Set debug and CD-ROM enable flags in storage struct
+	c->dbgEN = dbgEN;
+	c->cdromEN = cdromEN;
+	// Clear debug and CD-ROM overwrite flags
+	c->dbgOverwrite = 0;
+	c->cdromOverwrite = 0;
 
 	// If RAM disk enabled, try to allocate RAM disk buffer if not already
 	if (ramEN & !c->ramdisk) {

@@ -28,6 +28,10 @@ typedef struct RDiskStorage_s {
 	DrvSts2 status;
 	char initialized;
 	Ptr ramdisk;
+	char dbgEN;
+	char dbgOverwrite;
+	char cdromEN;
+	char cdromOverwrite;
 	#ifdef RDISK_COMPRESS_ICON_ENABLE
 	char icon[RDISK_ICON_SIZE];
 	#endif
