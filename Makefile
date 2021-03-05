@@ -1,5 +1,5 @@
 # path to RETRO68
-RETRO68=/Users/zane/Retro68-build/toolchain
+RETRO68=~/Retro68-build/toolchain
 
 PREFIX=$(RETRO68)/bin/m68k-apple-macos
 AS=$(PREFIX)-as
