@@ -30,6 +30,8 @@ RDiskDBGDisByte:
 dc.b 0x44
 RDiskCDROMDisByte:
 dc.b 0x44
+RDiskRAMRequired:
+.ascii	"16"
 
 .align 4
 DOpen:
