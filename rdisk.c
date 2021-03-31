@@ -146,8 +146,8 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 				c->status.writeProt = 0;
 
 				// Patch debug and CD-ROM enable bytes
-				BlockMove(&dis/*RDiskDBGDisByte*/, &c->ramdisk[*RDiskDBGDisPos], 1);
-				BlockMove(&dis/*RDiskCDROMDisByte*/, &c->ramdisk[*RDiskCDROMDisPos], 1);
+				BlockMove(&c->ramdisk[*RDiskDBGDisPos], &dis, 1);
+				BlockMove(&c->ramdisk[*RDiskCDROMDisPos], &dis, 1);
 			}
 		} else { // 24-bit mode
 			// Put RAM disk just past 8MB
@@ -161,8 +161,8 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			// That's not the worst, since the system would just crash,
 			// but it would be better to switch to read-only status
 			// Patch debug and CD-ROM enable bytes
-			copy24(&dis/*RDiskDBGDisByte*/, &c->ramdisk[*RDiskDBGDisPos], 1);
-			copy24(&dis/*RDiskCDROMDisByte*/, &c->ramdisk[*RDiskCDROMDisPos], 1);
+			copy24(&c->ramdisk[*RDiskDBGDisPos], &dis, 1);
+			copy24(&c->ramdisk[*RDiskCDROMDisPos], &dis, 1);
 		}
 		// Patch debug and CD-ROM enable bytes
 		//if (!c->dbgEN) {
