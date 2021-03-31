@@ -125,9 +125,6 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Set debug and CD-ROM enable flags in storage struct
 	c->dbgEN = dbgEN;
 	c->cdromEN = cdromEN;
-	// Clear debug and CD-ROM overwrite flags
-	c->dbgOverwrite = 0;
-	c->cdromOverwrite = 0;
 
 	// If RAM disk enabled, try to allocate RAM disk buffer if not already
 	if (ramEN & !c->ramdisk) {
@@ -158,6 +155,14 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			// That's not the worst, since the system would just crash,
 			// but it would be better to switch to read-only status
 		}
+		// Patch debug and CD-ROM enable bytes
+		char dis = 0x44;
+		//if (!c->dbgEN) {
+			copy24(&dis/*RDiskDBGDisByte*/, &c->ramdisk[*RDiskDBGDisPos], 1);
+		//}
+		//if (!c->cdromEN) {
+			copy24(&dis/*RDiskCDROMDisByte*/, &c->ramdisk[*RDiskCDROMDisPos], 1);
+		//}
 	}
 
 	// Unmount if not booting from ROM disk
@@ -200,15 +205,15 @@ OSErr RDPrime(IOParamPtr p, DCtlPtr d) {
 		if (*MMU32bit) { BlockMove(disk, p->ioBuffer, p->ioReqCount); }
 		else { copy24(disk, StripAddress(p->ioBuffer), p->ioReqCount); }
 
-		if (!c->dbgEN && !c->dbgOverwrite && 
+		if (/*!c->dbgEN && */!c->ramdisk &&
 			*RDiskDBGDisPos >= d->dCtlPosition && 
 			*RDiskDBGDisPos < d->dCtlPosition + p->ioReqCount) {
-			p->ioBuffer[*RDiskDBGDisPos - d->dCtlPosition] = *RDiskDBGDisByte;
+			p->ioBuffer[*RDiskDBGDisPos - d->dCtlPosition] = 0x44;//*RDiskDBGDisByte;
 		}
-		if (!c->cdromEN && !c->cdromOverwrite && 
+		if (/*!c->cdromEN && */!c->ramdisk &&
 			*RDiskCDROMDisPos >= d->dCtlPosition && 
 			*RDiskCDROMDisPos < d->dCtlPosition + p->ioReqCount) {
-			p->ioBuffer[*RDiskCDROMDisPos - d->dCtlPosition] = *RDiskCDROMDisByte;
+			p->ioBuffer[*RDiskCDROMDisPos - d->dCtlPosition] = 0x44;//*RDiskCDROMDisByte;
 		}
 	} else if (cmd == aWrCmd) { // Write
 		// Fail if write protected or RAM disk buffer not set up
@@ -216,15 +221,6 @@ OSErr RDPrime(IOParamPtr p, DCtlPtr d) {
 		// Write from buffer into disk.
 		if (*MMU32bit) { BlockMove(p->ioBuffer, disk, p->ioReqCount); }
 		else { copy24(StripAddress(p->ioBuffer), disk, p->ioReqCount); }
-
-		if (*RDiskDBGDisPos >= d->dCtlPosition && 
-			*RDiskDBGDisPos < d->dCtlPosition + p->ioReqCount) {
-			c->dbgOverwrite = 1;
-		}
-		if (*RDiskCDROMDisPos >= d->dCtlPosition && 
-			*RDiskCDROMDisPos < d->dCtlPosition + p->ioReqCount) {
-			c->cdromOverwrite = 1;
-		}
 	} else { return noErr; } //FIXME: Fail if cmd isn't read or write?
 
 	// Update count and position/offset, then return
