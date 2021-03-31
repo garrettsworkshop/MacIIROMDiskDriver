@@ -19,9 +19,9 @@ RDiskSig:
 .ascii	"\5RDisk\0"
 .align 4
 RDiskDBGDisPos:
-dc.l 0x000106DA
+dc.l 0x00000031
 RDiskCDROMDisPos:
-dc.l 0x00012C96
+dc.l 0x00012CAF
 RDiskDBGNamePos:
 dc.l 0x4088002A
 RDiskCDROMNamePos:
