@@ -1,2 +1,4 @@
 *.DS_Store
 obj/
+bin/rom16M_swap.bin
+bin/rom8M_swap.bin
