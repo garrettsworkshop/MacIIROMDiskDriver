@@ -158,10 +158,10 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		// Patch debug and CD-ROM enable bytes
 		char dis = 0x44;
 		//if (!c->dbgEN) {
-			copy24(&dis/*RDiskDBGDisByte*/, &c->ramdisk[*RDiskDBGDisPos], 1);
+			//copy24(&dis/*RDiskDBGDisByte*/, &c->ramdisk[*RDiskDBGDisPos], 1);
 		//}
 		//if (!c->cdromEN) {
-			copy24(&dis/*RDiskCDROMDisByte*/, &c->ramdisk[*RDiskCDROMDisPos], 1);
+			//copy24(&dis/*RDiskCDROMDisByte*/, &c->ramdisk[*RDiskCDROMDisPos], 1);
 		//}
 	}
 
@@ -208,12 +208,12 @@ OSErr RDPrime(IOParamPtr p, DCtlPtr d) {
 		if (/*!c->dbgEN && */!c->ramdisk &&
 			*RDiskDBGDisPos >= d->dCtlPosition && 
 			*RDiskDBGDisPos < d->dCtlPosition + p->ioReqCount) {
-			p->ioBuffer[*RDiskDBGDisPos - d->dCtlPosition] = 0x44;//*RDiskDBGDisByte;
+			//p->ioBuffer[*RDiskDBGDisPos - d->dCtlPosition] = 0x44;//*RDiskDBGDisByte;
 		}
 		if (/*!c->cdromEN && */!c->ramdisk &&
 			*RDiskCDROMDisPos >= d->dCtlPosition && 
 			*RDiskCDROMDisPos < d->dCtlPosition + p->ioReqCount) {
-			p->ioBuffer[*RDiskCDROMDisPos - d->dCtlPosition] = 0x44;//*RDiskCDROMDisByte;
+			//p->ioBuffer[*RDiskCDROMDisPos - d->dCtlPosition] = 0x44;//*RDiskCDROMDisByte;
 		}
 	} else if (cmd == aWrCmd) { // Write
 		// Fail if write protected or RAM disk buffer not set up
