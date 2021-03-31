@@ -2,3 +2,6 @@
 obj/
 bin/rom16M_swap.bin
 bin/rom8M_swap.bin
+RDiskCP/RDiskCP.rsrc
+RDiskCP/GW ROM Disk
+RDiskCP/RDiskCP
