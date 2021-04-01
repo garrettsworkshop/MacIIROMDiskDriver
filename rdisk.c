@@ -210,17 +210,6 @@ OSErr RDPrime(IOParamPtr p, DCtlPtr d) {
 		// Read from disk into buffer.
 		if (*MMU32bit) { BlockMove(disk, p->ioBuffer, p->ioReqCount); }
 		else { copy24(disk, StripAddress(p->ioBuffer), p->ioReqCount); }
-
-		if (/*!c->dbgEN && */!c->ramdisk &&
-			*RDiskDBGDisPos >= d->dCtlPosition && 
-			*RDiskDBGDisPos < d->dCtlPosition + p->ioReqCount) {
-			//p->ioBuffer[*RDiskDBGDisPos - d->dCtlPosition] = 0x44;//*RDiskDBGDisByte;
-		}
-		if (/*!c->cdromEN && */!c->ramdisk &&
-			*RDiskCDROMDisPos >= d->dCtlPosition && 
-			*RDiskCDROMDisPos < d->dCtlPosition + p->ioReqCount) {
-			//p->ioBuffer[*RDiskCDROMDisPos - d->dCtlPosition] = 0x44;//*RDiskCDROMDisByte;
-		}
 	} else if (cmd == aWrCmd) { // Write
 		// Fail if write protected or RAM disk buffer not set up
 		if (c->status.writeProt || !c->ramdisk) { return wPrErr; }
