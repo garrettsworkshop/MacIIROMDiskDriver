@@ -62,8 +62,8 @@ void P24(Ptr ramdisk, char dbgEN, char cdromEN) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
 	// Patch debug and CD-ROM disable bytes
-	if (!dbgEN) { ramdisk[*RDiskDBGDisPos] = *RDiskDBGDisByte; }
-	if (!cdromEN) { ramdisk[*RDiskCDROMDisPos] = *RDiskCDROMDisByte; }
+	//if (!dbgEN) { ramdisk[*RDiskDBGDisPos] = *RDiskDBGDisByte; }
+	//if (!cdromEN) { ramdisk[*RDiskCDROMDisPos] = *RDiskCDROMDisByte; }
 	SwapMMUMode(&mode);
 }
 
