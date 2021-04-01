@@ -19,9 +19,6 @@ OSErr RDiskAddDrive(short drvrRefNum, short drvNum, DrvQElPtr dq) = {0x4840, 0x3
 static inline char RDiskIsRPressed() { return *((char*)0x175) & 0x80; }
 static inline char RDiskIsAPressed() { return *((char*)0x174) & 0x01; }
 
-typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
-#define copy24(s, d, b) { RDiskCopy_t copy24 = (RDiskCopy_t)RDCopy24; copy24(s, d, b); }
-
 //#define RDISK_COMPRESS_ICON_ENABLE
 #define RDISK_ICON_SIZE (285)
 typedef struct RDiskStorage_s {
@@ -34,6 +31,11 @@ typedef struct RDiskStorage_s {
 	char icon[RDISK_ICON_SIZE];
 	#endif
 } RDiskStorage_t;
+
+typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
+#define copy24(s, d, b) { RDiskCopy_t copy24 = (RDiskCopy_t)C24; copy24(s, d, b); }
+typedef void (*RDiskPatch_t)(Ptr, char, char);
+#define patch24(s, d, b) { RDiskPatch_t patch24 = (RDiskPatch_t)P24; patch24(s, d, b); }
 
 #define PackBits_Repeat(count) (-1 * (count - 1))
 #define PackBits_Literal(count) (count - 1)

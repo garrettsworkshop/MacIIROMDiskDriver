@@ -36,7 +36,7 @@ static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, P
 		}
 	}
 
-	// MacsBug enabled if bit 3 == 1 or DBGDis addr invalid or not boot
+	// MacsBug enabled if bit 2 == 1 or DBGDis addr invalid or not boot
 	*dbgEN = *unmountEN ||
 		(legacy_startup & 0x04) || 
 		(*RDiskDBGDisPos == 0);
@@ -48,11 +48,22 @@ static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, P
 }
 
 // Switch to 32-bit mode and copy
-#pragma parameter RDCopy24(__A0, __A1, __D0)
-void RDCopy24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
+#pragma parameter C24(__A0, __A1, __D0)
+void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
 	BlockMove(sourcePtr, destPtr, byteCount);
+	SwapMMUMode(&mode);
+}
+
+// Switch to 32-bit mode and patch
+void P24(Ptr ramdisk, char dbgEN, char cdromEN) {
+	if (!ramdisk) { return; }
+	signed char mode = true32b;
+	SwapMMUMode(&mode);
+	// Patch debug and CD-ROM disable bytes
+	if (!dbgEN) { ramdisk[*RDiskDBGDisPos] = *RDiskDBGDisByte; }
+	if (!cdromEN) { ramdisk[*RDiskCDROMDisPos] = *RDiskCDROMDisByte; }
 	SwapMMUMode(&mode);
 }
 
@@ -126,8 +137,6 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	c->dbgEN = dbgEN;
 	c->cdromEN = cdromEN;
 
-	char dis = 0x44;
-
 	// If RAM disk enabled, try to allocate RAM disk buffer if not already
 	if (ramEN & !c->ramdisk) {
 		if (*MMU32bit) { // 32-bit mode
@@ -144,32 +153,23 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 				BlockMove(RDiskBuf, c->ramdisk, RDiskSize);
 				// Clearing write protect marks RAM disk enabled
 				c->status.writeProt = 0;
-
-				// Patch debug and CD-ROM enable bytes
-				BlockMove(&c->ramdisk[*RDiskDBGDisPos], &dis, 1);
-				BlockMove(&c->ramdisk[*RDiskCDROMDisPos], &dis, 1);
 			}
 		} else { // 24-bit mode
 			// Put RAM disk just past 8MB
 			c->ramdisk = (Ptr)(8 * 1024 * 1024);
 			// Copy ROM disk image to RAM disk
-			copy24(RDiskBuf, c->ramdisk, RDiskSize);
-			// Clearing write protect marks RAM disk enabled
-			c->status.writeProt = 0;
 			//FIXME: what if we don't have enough RAM? 
 			// Will this wrap around and overwrite low memory?
 			// That's not the worst, since the system would just crash,
 			// but it would be better to switch to read-only status
-			// Patch debug and CD-ROM enable bytes
-			copy24(&c->ramdisk[*RDiskDBGDisPos], &dis, 1);
-			copy24(&c->ramdisk[*RDiskCDROMDisPos], &dis, 1);
+			copy24(RDiskBuf, c->ramdisk, RDiskSize);
+			// Clearing write protect marks RAM disk enabled
+			c->status.writeProt = 0;
 		}
-		// Patch debug and CD-ROM enable bytes
-		//if (!c->dbgEN) {
-		//}
-		//if (!c->cdromEN) {
-		//}
 	}
+
+	// Patch debug and CD-ROM enable bytes
+	patch24(c->ramdisk, dbgEN, cdromEN);
 
 	// Unmount if not booting from ROM disk
 	if (unmountEN) { c->status.diskInPlace = 0; }
