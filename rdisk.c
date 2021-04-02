@@ -63,8 +63,8 @@ void P24(Ptr ramdisk, char dbgEN, char cdromEN) {
 	register Ptr dbg __asm__("%a1") = &ramdisk[*RDiskDBGDisPos];
 	register Ptr cdrom __asm__("%a2") = &ramdisk[*RDiskCDROMDisPos];
 	// Patch debug and CD-ROM disable bytes
-	if (!dbgEN) { *dbg = *RDiskDBGDisByte; }
-	if (!cdromEN) { *cdrom = *RDiskCDROMDisByte; }
+	//if (!dbgEN) { *dbg = *RDiskDBGDisByte; }
+	//if (!cdromEN) { *cdrom = *RDiskCDROMDisByte; }
 	SwapMMUMode(&mode);
 }
 
