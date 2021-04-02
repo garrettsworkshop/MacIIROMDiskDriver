@@ -45,7 +45,7 @@ static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, P
 
 // Switch to 32-bit mode and copy
 #pragma parameter C24(__A0, __A1, __D0)
-void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
+void __attribute__ ((noinline)) C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
 	BlockMove(sourcePtr, destPtr, byteCount);
@@ -53,21 +53,25 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 }
 
 // Switch to 32-bit mode and get
-#pragma parameter G24(__A2)
+#pragma parameter __D0 G24(__A2)
 char __attribute__ ((noinline)) G24(Ptr pos) {
+	long ret;
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
-	return *pos; // Peek
+	ret = *pos; // Peek
 	SwapMMUMode(&mode);
+	return ret;
 }
 
 // Switch to 32-bit mode and get
-#pragma parameter G24L(__A2)
+#pragma parameter __D0 G24L(__A2)
 long __attribute__ ((noinline)) G24L(long *pos) {
+	long ret;
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
-	return *pos; // Peek
+	ret = *pos; // Peek
 	SwapMMUMode(&mode);
+	return ret;
 }
 
 // Switch to 32-bit mode and set
