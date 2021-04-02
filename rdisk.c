@@ -164,10 +164,10 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 
 	// Patch debug and CD-ROM enable bytes
 	if (c->ramdisk) {
-		Ptr pos = c->ramdisk + 0x00000031UL;
+		Ptr pos = c->ramdisk + *((long*)0x40851D98);
 		char patch = *((char*)0x40851DA8);
 		if (!dbgEN /*&& *RDiskDBGDisPos >= 0*/) { patch24(pos, patch); }
-		pos = c->ramdisk + 0x00012CAFUL;
+		pos = c->ramdisk + *((long*)0x40851D9C);
 		patch = *((char*)0x40851DA9);
 		if (!cdrEN /*&& *RDiskCDRDisPos >= 0*/) { patch24(pos, patch); }
 	}
