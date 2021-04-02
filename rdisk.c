@@ -152,10 +152,8 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Set debug and CD-ROM disable stuff in storage struct
 	peek24L((long*)0x40851D98, c->dbgDisPos);
 	peek24L((long*)0x40851D9C, c->cdrDisPos);
-	peek24((char*)0x40851DA8, c->dbgDisByte);
-	peek24((char*)0x40851DA9, c->cdrDisByte);
-	if (dbgEN) { peek24(RDiskBuf + c->dbgDisPos, c->dbgDisByte); }
-	if (cdrEN) { peek24(RDiskBuf + c->cdrDisPos, c->cdrDisByte); }
+	peek24(dbgEN ? RDiskBuf + c->dbgDisPos : (char*)0x40851DA8, c->dbgDisByte);
+	peek24(cdrEN ? RDiskBuf + c->cdrDisPos : (char*)0x40851DA9, c->cdrDisByte);
 	
 	// If RAM disk enabled, try to allocate RAM disk buffer if not already
 	if (ramEN & !c->ramdisk) {
