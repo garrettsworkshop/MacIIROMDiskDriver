@@ -29,7 +29,7 @@ dc.l 0x40892C96
 RDiskDBGDisByte:
 dc.b 0x44
 RDiskCDRDisByte:
-dc.b 0x44
+dc.b 0x67
 RDiskRAMRequired:
 .ascii	"16"
 
