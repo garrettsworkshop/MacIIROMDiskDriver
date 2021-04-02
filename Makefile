@@ -25,7 +25,7 @@ obj/entry_rel.sym: obj obj/entry.o
 
 
 obj/rdisk7M5.o: rdisk.c obj
-	$(CC) -Wall -DRDiskSize=7864320 -c -Os $< -o $@
+	$(CC) -Wall -DRDiskSize=7864320 -march=68030 -c -Os $< -o $@
 
 obj/rdisk7M5.s: obj obj/rdisk7M5.o
 	$(OBJDUMP) -d obj/rdisk7M5.o > $@

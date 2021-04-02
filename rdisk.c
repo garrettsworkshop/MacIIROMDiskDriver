@@ -57,6 +57,7 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 void __attribute__ ((noinline)) P24(Ptr ptr, Ptr patch) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
+	DebugStr("\phello");
 	*ptr = *patch; // Patch byte
 	SwapMMUMode(&mode);
 }
@@ -236,8 +237,8 @@ OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 			if (!c->status.diskInPlace || c->status.writeProt ||
 				!c->ramdisk) { return controlErr; } 
 			long long zero = 0;
-			if (*MMU32bit) { copy24(c->ramdisk, &zero, sizeof(zero)); }
-			else { copy24(c->ramdisk, StripAddress(&zero), sizeof(zero)); }
+			if (*MMU32bit) { copy24(c->ramdisk, (Ptr)(&zero), sizeof(zero)); }
+			else { copy24(c->ramdisk, StripAddress((Ptr)(&zero)), sizeof(zero)); }
 			return noErr;
 		case kVerify:
 			if (!c->status.diskInPlace) { return controlErr; }
