@@ -28,7 +28,7 @@ typedef struct RDiskStorage_s {
 	char dbgDisByte;
 	char cdrDisByte;
 	#ifdef RDISK_COMPRESS_ICON_ENABLE
-	char icon[RDISK_ICON_SIZE];
+	char icon[RDISK_ICON_SIZE+8];
 	#endif
 } RDiskStorage_t;
 
