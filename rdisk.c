@@ -57,7 +57,7 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 void __attribute__ ((noinline)) P24(Ptr ptr, Ptr patch) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
-	DebugStr("\phello");
+	Debugger();
 	*ptr = *patch; // Patch byte
 	SwapMMUMode(&mode);
 }
