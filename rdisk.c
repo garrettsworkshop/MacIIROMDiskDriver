@@ -64,8 +64,8 @@ void P24(Ptr romdisk, int32_t index, char patch) {
 typedef void (*RDiskPatch_t)(Ptr, char, char);
 static void patch24(Ptr romdisk, char dbgEN, char cdrEN) {
 	RDiskPatch_t fun = (RDiskPatch_t)P24;
-	if (dbgEN) { fun(romdisk, 0x00000031, 0x44); }
-	if (cdrEN) { fun(romdisk, 0x00012CAF, 0x44); }
+	/*if (!dbgEN)*/ { fun(romdisk, 0x00000031, 0x44); }
+	/*if (!cdrEN)*/ { fun(romdisk, 0x00012CAF, 0x44); }
 }
 
 // Figure out the first available drive number >= 5
