@@ -62,7 +62,7 @@ void P24(Ptr dbg, Ptr cdrom, char dbgByte, char cdromByte) {
 	SwapMMUMode(&mode);
 	// Patch debug and CD-ROM disable bytes
 	if (dbg) { *dbg = dbgByte; }
-	//if (cdrom) { *cdrom = cdromByte; }
+	if (cdrom) { *cdrom = cdromByte; }
 	SwapMMUMode(&mode);
 }
 
@@ -243,7 +243,7 @@ OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 	switch (p->csCode) {
 		case killCode:
 			return noErr;
-		case kFormat:
+		/*case kFormat:
 			if (!c->status.diskInPlace || c->status.writeProt ||
 				!c->ramdisk) { return controlErr; } 
 			long zero[32];
@@ -251,7 +251,7 @@ OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 			for (int i = 0; i < 32; i++) {
 				copy24((Ptr)zero, c->ramdisk + i * sizeof(zero), sizeof(zero));
 			}
-			return noErr;
+			return noErr;*/
 		case kVerify:
 			if (!c->status.diskInPlace) { return controlErr; }
 			return noErr;
