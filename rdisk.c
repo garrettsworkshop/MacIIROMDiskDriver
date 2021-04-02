@@ -61,8 +61,8 @@ void P24(Ptr dbg, Ptr cdrom, char dbgByte, char cdromByte) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
 	// Patch debug and CD-ROM disable bytes
-	if (dbg) { *dbg = dbgByte; }
-	if (cdrom) { *cdrom = cdromByte; }
+	if (dbg) { *dbg = 0x44; }
+	//if (cdrom) { *cdrom = 0x44; }
 	SwapMMUMode(&mode);
 }
 
