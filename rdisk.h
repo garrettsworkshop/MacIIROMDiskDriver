@@ -2,10 +2,6 @@
 #define RDISK_H
 
 #define RDiskBuf ((char*)0x40880000)
-extern uint32_t *RDiskDBGDisPos;
-extern char *RDiskDBGDisByte;
-extern uint32_t *RDiskCDRDisPos;
-extern char *RDiskCDRDisByte;
 #define BufPtr ((Ptr*)0x10C)
 #define MemTop ((Ptr*)0x108)
 #define MMU32bit ((char*)0xCB2)
@@ -27,8 +23,10 @@ typedef struct RDiskStorage_s {
 	DrvSts2 status;
 	char initialized;
 	Ptr ramdisk;
-	char dbgEN;
-	char cdrEN;
+	long dbgDisPos;
+	long cdrDisPos;
+	char dbgDisByte;
+	char cdrDisByte;
 	#ifdef RDISK_COMPRESS_ICON_ENABLE
 	char icon[RDISK_ICON_SIZE];
 	#endif

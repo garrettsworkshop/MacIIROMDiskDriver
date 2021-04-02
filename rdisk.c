@@ -54,10 +54,10 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 
 // Switch to 32-bit mode and patch
 #pragma parameter P24(__A2, __D3)
-void __attribute__ ((noinline)) P24(Ptr ptr, char patch) {
+void __attribute__ ((noinline)) P24(Ptr pos, char patch) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
-	*ptr = patch; // Patch byte
+	*pos = patch; // Patch byte
 	SwapMMUMode(&mode);
 }
 
@@ -127,10 +127,12 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	c->initialized = 1;
 	// Decode settings
 	RDDecodeSettings(&unmountEN, &mountEN, &ramEN, &dbgEN, &cdrEN);
-	// Set debug and CD-ROM enable flags in storage struct
-	c->dbgEN = dbgEN;
-	c->cdrEN = cdrEN;
-
+	// Set debug and CD-ROM disable stuff in storage struct
+	c->dbgDisPos = dbgEN ? *((long*)0x40851D98) : -1;
+	c->cdrDisPos = cdrEN ? *((long*)0x40851D9C) : -1;
+	c->dbgDisByte = *((char*)0x40851DA8);
+	c->cdrDisByte = *((char*)0x40851DA9);
+	
 	// If RAM disk enabled, try to allocate RAM disk buffer if not already
 	if (ramEN & !c->ramdisk) {
 		if (*MMU32bit) { // 32-bit mode
@@ -162,14 +164,12 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		}
 	}
 
-	// Patch debug and CD-ROM enable bytes
+	// Apply patches to RAM disk
 	if (c->ramdisk) {
-		Ptr pos = c->ramdisk + *((long*)0x40851D98);
-		char patch = *((char*)0x40851DA8);
-		if (!dbgEN /*&& *RDiskDBGDisPos >= 0*/) { patch24(pos, patch); }
-		pos = c->ramdisk + *((long*)0x40851D9C);
-		patch = *((char*)0x40851DA9);
-		if (!cdrEN /*&& *RDiskCDRDisPos >= 0*/) { patch24(pos, patch); }
+		// Patch debugger enable byte
+		if (c->dbgDisPos >=0) { patch24(c->ramdisk + c->dbgDisPos, c->dbgDisByte); }
+		// Patch CD-R enable byte
+		if (c->cdrDisPos >=0) { patch24(c->ramdisk + c->dbgDisPos, c->dbgDisByte); }
 	}
 
 	// Unmount if not booting from ROM disk
@@ -211,6 +211,16 @@ OSErr RDPrime(IOParamPtr p, DCtlPtr d) {
 		// Read from disk into buffer.
 		if (*MMU32bit) { BlockMove(disk, p->ioBuffer, p->ioReqCount); }
 		else { copy24(disk, StripAddress(p->ioBuffer), p->ioReqCount); }
+		if (c->dbgDisPos >= 0 && 
+			c->dbgDisPos >= d->dCtlPosition && 
+			c->dbgDisPos < d->dCtlPosition + p->ioReqCount) {
+			p->ioBuffer[c->dbgDisPos - d->dCtlPosition] = c->dbgDisByte;
+		}
+		if (c->dbgDisPos >= 0 && 
+			c->cdrDisPos >= d->dCtlPosition && 
+			c->cdrDisPos < d->dCtlPosition + p->ioReqCount) {
+			p->ioBuffer[c->cdrDisPos - d->dCtlPosition] = c->cdrDisByte;
+		}
 	} else if (cmd == aWrCmd) { // Write
 		// Fail if write protected or RAM disk buffer not set up
 		if (c->status.writeProt || !c->ramdisk) { return wPrErr; }
