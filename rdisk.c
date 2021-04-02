@@ -53,19 +53,13 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 }
 
 // Switch to 32-bit mode and patch
-void P24(Ptr ramdisk, long index, char patch) {
+typedef void (*RDiskPatch_t)(Ptr, long, char);
+void __attribute__ ((noinline)) P24(Ptr ramdisk, long index, char patch) {
 	if (index < 0) { return; } // Don't patch if index < 0
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
 	ramdisk[index] = patch; // Patch byte
 	SwapMMUMode(&mode);
-}
-
-typedef void (*RDiskPatch_t)(Ptr, long, char);
-static void patch24(Ptr ramdisk, char dbgEN, char cdrEN) {
-	RDiskPatch_t fun = P24;
-	if (!dbgEN) { fun(ramdisk, 0x00000031UL, 0x44); }
-	if (!cdrEN) { fun(ramdisk, 0x00012CAFUL, 0x44); }
 }
 
 // Figure out the first available drive number >= 5
@@ -154,8 +148,6 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 				BlockMove(RDiskBuf, c->ramdisk, RDiskSize);
 				// Clearing write protect marks RAM disk enabled
 				c->status.writeProt = 0;
-				// Patch debug and CD-ROM enable bytes
-				patch24(c->ramdisk, dbgEN, cdrEN);
 			}
 		} else { // 24-bit mode
 			// Put RAM disk just past 8MB
@@ -168,9 +160,14 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			copy24(RDiskBuf, c->ramdisk, RDiskSize);
 			// Clearing write protect marks RAM disk enabled
 			c->status.writeProt = 0;
-			// Patch debug and CD-ROM enable bytes
-			patch24(c->ramdisk, dbgEN, cdrEN);
 		}
+	}
+
+	// Patch debug and CD-ROM enable bytes
+	if (c->ramdisk) {
+		RDiskPatch_t fun = P24;
+		if (!dbgEN) { fun(c->ramdisk, 0x00000031UL, 0x44); }
+		if (!cdrEN) { fun(c->ramdisk, 0x00012CAFUL, 0x44); }
 	}
 
 	// Unmount if not booting from ROM disk
