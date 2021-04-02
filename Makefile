@@ -43,7 +43,7 @@ obj/driver_abs.sym: obj obj/driver7M5.o
 bin/driver7M5.bin: bin obj/driver7M5.o
 	$(OBJCOPY) -O binary obj/driver7M5.o $@
 
-bin/rom8M.bin: bin baserom.bin RDisk7M5patch.dsk bin bin/driver7M5.bin obj/driver_abs.sym obj/entry_rel.sym 
+bin/rom8M.bin: bin baserom.bin RDisk7M5.dsk bin bin/driver7M5.bin obj/driver_abs.sym obj/entry_rel.sym 
 	cp baserom.bin $@ # Copy base rom
 	# Patch driver
 	dd if=bin/driver7M5.bin of=$@ bs=1 seek=335248 skip=32 conv=notrunc # Copy driver code
@@ -54,7 +54,7 @@ bin/rom8M.bin: bin baserom.bin RDisk7M5patch.dsk bin bin/driver7M5.bin obj/drive
 	cat obj/entry_rel.sym | grep "DControl" | cut -c5-8 | xxd -r -p - | dd of=$@ bs=1 seek=335228 count=2 conv=notrunc
 	cat obj/entry_rel.sym | grep "DStatus" | cut -c5-8 | xxd -r -p - | dd of=$@ bs=1 seek=335230 count=2 conv=notrunc
 	cat obj/entry_rel.sym | grep "DClose" | cut -c5-8 | xxd -r -p - | dd of=$@ bs=1 seek=335232 count=2 conv=notrunc
-	dd if=RDisk7M5patch.dsk of=$@ bs=1024 seek=512 count=7680 conv=notrunc # copy disk image
+	dd if=RDisk7M5.dsk of=$@ bs=1024 seek=512 count=7680 conv=notrunc # copy disk image
 
 bin/rom8M_swap.bin: bin bin/rom8M.bin
 	dd if=bin/rom8M.bin of=$@ conv=swab # swap bytes
