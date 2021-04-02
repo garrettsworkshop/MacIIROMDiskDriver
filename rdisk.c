@@ -53,12 +53,12 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 }
 
 // Switch to 32-bit mode and patch
-typedef void (*RDiskPatch_t)(Ptr, char);
-#pragma parameter P24(__A0, __D0)
-void __attribute__ ((noinline)) P24(Ptr ptr, char patch) {
+typedef void (*RDiskPatch_t)(Ptr, char*);
+#pragma parameter P24(__A0, __A1)
+void __attribute__ ((noinline)) P24(Ptr ptr, char *patch) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
-	*ptr = patch; // Patch byte
+	*ptr = *patch; // Patch byte
 	SwapMMUMode(&mode);
 }
 
@@ -166,8 +166,8 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Patch debug and CD-ROM enable bytes
 	if (c->ramdisk) {
 		RDiskPatch_t fun = P24;
-		if (!dbgEN /*&& *RDiskDBGDisPos >= 0*/) { fun(c->ramdisk + 0x00000031UL, *RDiskDBGDisByte); }
-		if (!cdrEN /*&& *RDiskCDRDisPos >= 0*/) { fun(c->ramdisk + 0x00012CAFUL, *RDiskCDRDisByte); }
+		if (!dbgEN /*&& *RDiskDBGDisPos >= 0*/) { fun(c->ramdisk + 0x00000031UL, RDiskDBGDisByte); }
+		if (!cdrEN /*&& *RDiskCDRDisPos >= 0*/) { fun(c->ramdisk + 0x00012CAFUL, RDiskCDRDisByte); }
 	}
 
 	// Unmount if not booting from ROM disk
