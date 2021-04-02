@@ -43,7 +43,7 @@ typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
 #define RDISK_COMPRESSED_ICON_SIZE (87)
 #ifdef RDISK_COMPRESS_ICON_ENABLE
 #include <Quickdraw.h>
-const char const RDiskIconCompressed[RDISK_COMPRESSED_ICON_SIZE] = {
+const char RDiskIconCompressed[RDISK_COMPRESSED_ICON_SIZE] = {
 	PackBits_Repeat(76), 0b00000000, /*
 	0b00000000, 0b00000000, 0b00000000, 0b00000000,
 	0b00000000, 0b00000000, 0b00000000, 0b00000000,
