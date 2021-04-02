@@ -22,9 +22,9 @@ RDiskDBGDisPos:
 dc.l 0x00000031
 RDiskCDROMDisPos:
 dc.l 0x00012CAF
-RDiskDBGNamePos:
+RDiskDBGNameAddr:
 dc.l 0x4088002A
-RDiskCDROMNamePos:
+RDiskCDROMNameAddr:
 dc.l 0x40892C96
 RDiskDBGDisByte:
 dc.b 0x44

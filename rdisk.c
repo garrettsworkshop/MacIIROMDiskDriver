@@ -58,12 +58,13 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 
 // Switch to 32-bit mode and patch
 void P24(Ptr ramdisk, char dbgEN, char cdromEN) {
-	if (!ramdisk) { return; }
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
+	register Ptr dbg __asm__("%a1") = &ramdisk[*RDiskDBGDisPos];
+	register Ptr cdrom __asm__("%a2") = &ramdisk[*RDiskCDROMDisPos];
 	// Patch debug and CD-ROM disable bytes
-	//if (!dbgEN) { ramdisk[*RDiskDBGDisPos] = *RDiskDBGDisByte; }
-	//if (!cdromEN) { ramdisk[*RDiskCDROMDisPos] = *RDiskCDROMDisByte; }
+	if (!dbgEN) { *dbg = *RDiskDBGDisByte; }
+	if (!cdromEN) { *cdrom = *RDiskCDROMDisByte; }
 	SwapMMUMode(&mode);
 }
 
@@ -153,6 +154,8 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 				BlockMove(RDiskBuf, c->ramdisk, RDiskSize);
 				// Clearing write protect marks RAM disk enabled
 				c->status.writeProt = 0;
+				// Patch debug and CD-ROM enable bytes
+				patch24(c->ramdisk, dbgEN, cdromEN);
 			}
 		} else { // 24-bit mode
 			// Put RAM disk just past 8MB
@@ -165,11 +168,10 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			copy24(RDiskBuf, c->ramdisk, RDiskSize);
 			// Clearing write protect marks RAM disk enabled
 			c->status.writeProt = 0;
+			// Patch debug and CD-ROM enable bytes
+			patch24(c->ramdisk, dbgEN, cdromEN);
 		}
 	}
-
-	// Patch debug and CD-ROM enable bytes
-	patch24(c->ramdisk, dbgEN, cdromEN);
 
 	// Unmount if not booting from ROM disk
 	if (unmountEN) { c->status.diskInPlace = 0; }
