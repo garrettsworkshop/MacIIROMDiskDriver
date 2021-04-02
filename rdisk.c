@@ -57,15 +57,21 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 }
 
 // Switch to 32-bit mode and patch
-void P24(Ptr ramdisk, char dbgEN, char cdromEN) {
+void P24(Ptr dbg, Ptr cdrom, char dbgByte, char cdromByte) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
-	register Ptr dbg __asm__("%a1") = &ramdisk[*RDiskDBGDisPos];
-	register Ptr cdrom __asm__("%a2") = &ramdisk[*RDiskCDROMDisPos];
 	// Patch debug and CD-ROM disable bytes
-	//if (!dbgEN) { *dbg = *RDiskDBGDisByte; }
-	if (!cdromEN) { *cdrom = *RDiskCDROMDisByte; }
+	if (dbg) { *dbg = dbgByte; }
+	if (cdrom) { *cdrom = cdromByte; }
 	SwapMMUMode(&mode);
+}
+
+typedef void (*RDiskPatch_t)(Ptr, Ptr, char, char);
+static void patch24(Ptr buf, char dbgEN, char cdromEN) {
+	RDiskPatch_t fun = (RDiskPatch_t)P24;
+	fun(/*dbgEN ?*/ buf + *RDiskDBGDisPos /*: (Ptr)0*/, 
+		/*cdromEN ?*/ buf + *RDiskCDROMDisPos /*: (Ptr)0*/,
+		*RDiskDBGDisByte, *RDiskCDROMDisPos);
 }
 
 // Figure out the first available drive number >= 5
