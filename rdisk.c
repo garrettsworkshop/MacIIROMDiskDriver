@@ -9,7 +9,7 @@
 #include "rdisk.h"
 
 // Decode keyboard/PRAM settings
-static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, Ptr cdromEN) {
+static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, Ptr cdrEN) {
 	// Read PRAM
 	char legacy_startup, legacy_ram;
 	RDiskReadXPRAM(1, 4, &legacy_startup);
@@ -36,15 +36,11 @@ static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, P
 		}
 	}
 
-	// MacsBug enabled if bit 2 == 1 or DBGDis addr invalid or not boot
-	*dbgEN = *unmountEN ||
-		(legacy_startup & 0x04) || 
-		(*RDiskDBGDisPos == 0);
+	// MacsBug enabled if bit 2 == 1 or not boot
+	*dbgEN = *unmountEN || (legacy_startup & 0x04);
 
-	// CDROM enabled if bit 3 == 0 or CDROMDis addr invalid or not boot
-	*cdromEN = *unmountEN ||
-		!(legacy_startup & 0x08) || 
-		(*RDiskCDROMDisPos == 0);
+	// CD-ROM enabled if bit 3 == 0 or not boot
+	*cdrEN = *unmountEN || !(legacy_startup & 0x08);
 }
 
 // Switch to 32-bit mode and copy
@@ -57,20 +53,19 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 }
 
 // Switch to 32-bit mode and patch
-void P24(Ptr romdisk, char dbgByte, char cdromByte) {
+void P24(Ptr romdisk, int32_t index, char patch) {
+	if (index < 0) { return; } // Don't patch if index < 0
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
-	// Patch debug and CD-ROM disable bytes
-	romdisk[0x31] = 0x44;
-	//if (dbg) { *dbg = 0x44; }
-	//if (cdrom) { *cdrom = 0x44; }
+	romdisk[index] = patch; // Patch byte
 	SwapMMUMode(&mode);
 }
 
 typedef void (*RDiskPatch_t)(Ptr, char, char);
-static void patch24(Ptr romdisk, char dbgEN, char cdromEN) {
+static void patch24(Ptr romdisk, char dbgEN, char cdrEN) {
 	RDiskPatch_t fun = (RDiskPatch_t)P24;
-	fun(romdisk, dbgEN, cdromEN);
+	if (dbgEN) { fun(romdisk, 0x00000031, 0x44); }
+	if (cdrEN) { fun(romdisk, 0x00012CAF, 0x44); }
 }
 
 // Figure out the first available drive number >= 5
@@ -134,14 +129,14 @@ OSErr RDOpen(IOParamPtr p, DCtlPtr d) {
 
 // Init is called at beginning of first prime (read/write) call
 static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
-	char unmountEN, mountEN, ramEN, dbgEN, cdromEN;
+	char unmountEN, mountEN, ramEN, dbgEN, cdrEN;
 	// Mark init done
 	c->initialized = 1;
 	// Decode settings
-	RDDecodeSettings(&unmountEN, &mountEN, &ramEN, &dbgEN, &cdromEN);
+	RDDecodeSettings(&unmountEN, &mountEN, &ramEN, &dbgEN, &cdrEN);
 	// Set debug and CD-ROM enable flags in storage struct
 	c->dbgEN = dbgEN;
-	c->cdromEN = cdromEN;
+	c->cdrEN = cdrEN;
 
 	// If RAM disk enabled, try to allocate RAM disk buffer if not already
 	if (ramEN & !c->ramdisk) {
@@ -160,7 +155,7 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 				// Clearing write protect marks RAM disk enabled
 				c->status.writeProt = 0;
 				// Patch debug and CD-ROM enable bytes
-				patch24(c->ramdisk, dbgEN, cdromEN);
+				patch24(c->ramdisk, dbgEN, cdrEN);
 			}
 		} else { // 24-bit mode
 			// Put RAM disk just past 8MB
@@ -174,7 +169,7 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			// Clearing write protect marks RAM disk enabled
 			c->status.writeProt = 0;
 			// Patch debug and CD-ROM enable bytes
-			patch24(c->ramdisk, dbgEN, cdromEN);
+			patch24(c->ramdisk, dbgEN, cdrEN);
 		}
 	}
 

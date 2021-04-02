@@ -4,8 +4,8 @@
 #define RDiskBuf ((char*)0x40880000)
 extern uint32_t *RDiskDBGDisPos;
 extern char *RDiskDBGDisByte;
-extern uint32_t *RDiskCDROMDisPos;
-extern char *RDiskCDROMDisByte;
+extern uint32_t *RDiskCDRDisPos;
+extern char *RDiskCDRDisByte;
 #define BufPtr ((Ptr*)0x10C)
 #define MemTop ((Ptr*)0x108)
 #define MMU32bit ((char*)0xCB2)
@@ -26,7 +26,7 @@ typedef struct RDiskStorage_s {
 	char initialized;
 	Ptr ramdisk;
 	char dbgEN;
-	char cdromEN;
+	char cdrEN;
 	#ifdef RDISK_COMPRESS_ICON_ENABLE
 	char icon[RDISK_ICON_SIZE];
 	#endif

@@ -8,9 +8,9 @@
 .GLOBAL RDiskDBGNamePos
 .GLOBAL RDiskDBGDisPos
 .GLOBAL RDiskDBGDisByte
-.GLOBAL RDiskCDROMNamePos
-.GLOBAL RDiskCDROMDisPos
-.GLOBAL RDiskCDROMDisByte
+.GLOBAL RDiskCDRNamePos
+.GLOBAL RDiskCDRDisPos
+.GLOBAL RDiskCDRDisByte
 
 dc.l	0x00000000, 0x00000000, 0x00000000, 0x00000000
 dc.l	0x00000000, 0x00000000, 0x00000000, 0x00000000
@@ -20,15 +20,15 @@ RDiskSig:
 .align 4
 RDiskDBGDisPos:
 dc.l 0x00000031
-RDiskCDROMDisPos:
+RDiskCDRDisPos:
 dc.l 0x00012CAF
 RDiskDBGNameAddr:
 dc.l 0x4088002A
-RDiskCDROMNameAddr:
+RDiskCDRNameAddr:
 dc.l 0x40892C96
 RDiskDBGDisByte:
 dc.b 0x44
-RDiskCDROMDisByte:
+RDiskCDRDisByte:
 dc.b 0x44
 RDiskRAMRequired:
 .ascii	"16"
