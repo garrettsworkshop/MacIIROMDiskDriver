@@ -149,11 +149,6 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	c->initialized = 1;
 	// Decode settings
 	RDDecodeSettings(&unmountEN, &mountEN, &ramEN, &dbgEN, &cdrEN);
-	// Set debug and CD-ROM disable stuff in storage struct
-	peek24L((long*)0x40851D98, c->dbgDisPos);
-	peek24L((long*)0x40851D9C, c->cdrDisPos);
-	peek24(dbgEN ? RDiskBuf + c->dbgDisPos : (char*)0x40851DA8, c->dbgDisByte);
-	peek24(cdrEN ? RDiskBuf + c->cdrDisPos : (char*)0x40851DA9, c->cdrDisByte);
 	
 	// If RAM disk enabled, try to allocate RAM disk buffer if not already
 	if (ramEN & !c->ramdisk) {
@@ -186,12 +181,23 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		}
 	}
 
-	// Apply patches to RAM disk
-	if (c->ramdisk) {
-		// Patch debugger enable byte
-		poke24(c->ramdisk + c->dbgDisPos, c->dbgDisByte);
-		// Patch CD-R enable byte
-		poke24(c->ramdisk + c->cdrDisPos, c->cdrDisByte);
+	// Get debug and CD-ROM disable settings from ROM table
+	peek24L((long*)0x40851D98, c->dbgDisPos);
+	peek24L((long*)0x40851D9C, c->cdrDisPos);
+	// Patch
+	if (c->dbgDisPos < RDiskSize) {
+		if (c->ramdisk) { poke24(c->ramdisk + c->dbgDisPos, c->dbgDisByte); }
+		else { peek24(dbgEN ? 
+			RDiskBuf + c->dbgDisPos : 
+			(char*)0x40851DA8, c->dbgDisByte);
+		}
+	}
+	if (c->dbgDisPos < RDiskSize) {
+		if (c->ramdisk) { poke24(c->ramdisk + c->cdrDisPos, c->cdrDisByte); }
+		else { peek24(cdrEN ? 
+			RDiskBuf + c->cdrDisPos : 
+			(char*)0x40851DA9, c->cdrDisByte);
+		}
 	}
 
 	// Unmount if not booting from ROM disk
