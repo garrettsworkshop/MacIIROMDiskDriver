@@ -57,7 +57,7 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 void __attribute__ ((noinline)) P24(Ptr ptr, char patch) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
-	*ptr = patch; // Patch byte
+	*ptr = *((char*)0x40851DA8); // Patch byte
 	SwapMMUMode(&mode);
 }
 
