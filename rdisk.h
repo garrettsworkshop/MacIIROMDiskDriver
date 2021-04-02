@@ -35,7 +35,10 @@ typedef struct RDiskStorage_s {
 } RDiskStorage_t;
 
 typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
-#define copy24(s, d, b) { RDiskCopy_t copy24 = C24; copy24(s, d, b); }
+#define copy24(s, d, b) { RDiskCopy_t f = C24; f(s, d, b); }
+
+typedef void (*RDiskPatch_t)(Ptr, Ptr);
+#define patch24(d, s) { RDiskPatch_t f = P24; f(d, s); }
 
 #define PackBits_Repeat(count) (-1 * (count - 1))
 #define PackBits_Literal(count) (count - 1)
