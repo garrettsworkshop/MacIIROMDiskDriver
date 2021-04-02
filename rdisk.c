@@ -235,8 +235,9 @@ OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 		case kFormat:
 			if (!c->status.diskInPlace || c->status.writeProt ||
 				!c->ramdisk) { return controlErr; } 
-			char zero = 0;
-			patch24(c->ramdisk, &zero);
+			long long zero = 0;
+			if (*MMU32bit) { copy24(c->ramdisk, &zero, sizeof(zero)); }
+			else { copy24(c->ramdisk, StripAddress(&zero), sizeof(zero)); }
 			return noErr;
 		case kVerify:
 			if (!c->status.diskInPlace) { return controlErr; }
