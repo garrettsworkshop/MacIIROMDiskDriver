@@ -53,8 +53,8 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 }
 
 // Switch to 32-bit mode and patch
-void P24(Ptr romdisk, int32_t index, char patch) {
-	if (index < 0) { return; } // Don't patch if index < 0
+void P24(Ptr romdisk, long index, char patch) {
+	//if (index < 0) { return; } // Don't patch if index < 0
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
 	romdisk[index] = patch; // Patch byte
@@ -64,8 +64,8 @@ void P24(Ptr romdisk, int32_t index, char patch) {
 typedef void (*RDiskPatch_t)(Ptr, char, char);
 static void patch24(Ptr romdisk, char dbgEN, char cdrEN) {
 	RDiskPatch_t fun = (RDiskPatch_t)P24;
-	/*if (!dbgEN)*/ { fun(romdisk, 0x00000031, 0x44); }
-	/*if (!cdrEN)*/ { fun(romdisk, 0x00012CAF, 0x44); }
+	/*if (!dbgEN)*/ { fun(romdisk, 0x00000031UL, 0x44); }
+	/*if (!cdrEN)*/ { fun(romdisk, 0x00012CAFUL, 0x44); }
 }
 
 // Figure out the first available drive number >= 5
