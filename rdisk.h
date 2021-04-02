@@ -10,6 +10,8 @@ extern char *RDiskCDRDisByte;
 #define MemTop ((Ptr*)0x108)
 #define MMU32bit ((char*)0xCB2)
 
+#define RDISK_COMPRESS_ICON_ENABLE
+
 #pragma parameter __D0 RDiskReadXPRAM(__D0, __D1, __A0)
 OSErr RDiskReadXPRAM(short numBytes, short whichByte, Ptr dest) = {0x4840, 0x3001, 0xA051};
 
