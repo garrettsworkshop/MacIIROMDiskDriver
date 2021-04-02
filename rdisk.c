@@ -166,7 +166,7 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Patch debug and CD-ROM enable bytes
 	if (c->ramdisk) {
 		RDiskPatch_t fun = P24;
-		if (!dbgEN) { fun(c->ramdisk, 0x00000031UL, 0x44); }
+		if (!dbgEN) { fun(c->ramdisk, 0x00000031UL, *RDiskDBGDisByte); }
 		if (!cdrEN) { fun(c->ramdisk, 0x00012CAFUL, 0x44); }
 	}
 
