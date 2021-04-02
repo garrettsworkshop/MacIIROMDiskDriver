@@ -52,12 +52,30 @@ void C24(Ptr sourcePtr, Ptr destPtr, unsigned long byteCount) {
 	SwapMMUMode(&mode);
 }
 
-// Switch to 32-bit mode and patch
-#pragma parameter P24(__A2, __D3)
-void __attribute__ ((noinline)) P24(Ptr pos, char patch) {
+// Switch to 32-bit mode and get
+#pragma parameter G24(__A2)
+char __attribute__ ((noinline)) G24(Ptr pos) {
 	signed char mode = true32b;
 	SwapMMUMode(&mode);
-	*pos = patch; // Patch byte
+	return *pos; // Peek
+	SwapMMUMode(&mode);
+}
+
+// Switch to 32-bit mode and get
+#pragma parameter G24L(__A2)
+long __attribute__ ((noinline)) G24L(long *pos) {
+	signed char mode = true32b;
+	SwapMMUMode(&mode);
+	return *pos; // Peek
+	SwapMMUMode(&mode);
+}
+
+// Switch to 32-bit mode and set
+#pragma parameter S24(__A2, __D3)
+void __attribute__ ((noinline)) S24(Ptr pos, char patch) {
+	signed char mode = true32b;
+	SwapMMUMode(&mode);
+	*pos = patch; // Poke
 	SwapMMUMode(&mode);
 }
 
@@ -128,10 +146,12 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Decode settings
 	RDDecodeSettings(&unmountEN, &mountEN, &ramEN, &dbgEN, &cdrEN);
 	// Set debug and CD-ROM disable stuff in storage struct
-	c->dbgDisPos = dbgEN ? *((long*)0x40851D98) : -1;
-	c->cdrDisPos = cdrEN ? *((long*)0x40851D9C) : -1;
-	c->dbgDisByte = *((char*)0x40851DA8);
-	c->cdrDisByte = *((char*)0x40851DA9);
+	peek24L((long*)0x40851D98, c->dbgDisPos);
+	peek24L((long*)0x40851D9C, c->cdrDisPos);
+	peek24((char*)0x40851DA8, c->dbgDisByte);
+	peek24((char*)0x40851DA9, c->cdrDisByte);
+	if (dbgEN) { peek24(RDiskBuf + c->dbgDisPos, c->dbgDisByte); }
+	if (cdrEN) { peek24(RDiskBuf + c->cdrDisPos, c->cdrDisByte); }
 	
 	// If RAM disk enabled, try to allocate RAM disk buffer if not already
 	if (ramEN & !c->ramdisk) {
@@ -167,9 +187,9 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	// Apply patches to RAM disk
 	if (c->ramdisk) {
 		// Patch debugger enable byte
-		if (c->dbgDisPos >=0) { patch24(c->ramdisk + c->dbgDisPos, c->dbgDisByte); }
+		poke24(c->ramdisk + c->dbgDisPos, c->dbgDisByte);
 		// Patch CD-R enable byte
-		if (c->cdrDisPos >=0) { patch24(c->ramdisk + c->dbgDisPos, c->dbgDisByte); }
+		poke24(c->ramdisk + c->cdrDisPos, c->cdrDisByte);
 	}
 
 	// Unmount if not booting from ROM disk
@@ -211,13 +231,11 @@ OSErr RDPrime(IOParamPtr p, DCtlPtr d) {
 		// Read from disk into buffer.
 		if (*MMU32bit) { BlockMove(disk, p->ioBuffer, p->ioReqCount); }
 		else { copy24(disk, StripAddress(p->ioBuffer), p->ioReqCount); }
-		if (c->dbgDisPos >= 0 && 
-			c->dbgDisPos >= d->dCtlPosition && 
+		if (!c->ramdisk && c->dbgDisPos >= d->dCtlPosition && 
 			c->dbgDisPos < d->dCtlPosition + p->ioReqCount) {
 			p->ioBuffer[c->dbgDisPos - d->dCtlPosition] = c->dbgDisByte;
 		}
-		if (c->dbgDisPos >= 0 && 
-			c->cdrDisPos >= d->dCtlPosition && 
+		if (!c->ramdisk && c->cdrDisPos >= d->dCtlPosition && 
 			c->cdrDisPos < d->dCtlPosition + p->ioReqCount) {
 			p->ioBuffer[c->cdrDisPos - d->dCtlPosition] = c->cdrDisByte;
 		}
