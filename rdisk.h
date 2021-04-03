@@ -38,9 +38,6 @@ typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
 typedef char (*RDiskPeek_t)(Ptr);
 #define peek24(a, d) { RDiskPeek_t f = G24; d = f(a); }
 
-typedef long (*RDiskPeekL_t)(long*);
-#define peek24L(a, d) { RDiskPeekL_t f = G24L; d = f(a); }
-
 typedef void (*RDiskPoke_t)(Ptr, char);
 #define poke24(a, d) { RDiskPoke_t f = S24; f(a, d); }
 

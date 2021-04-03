@@ -63,17 +63,6 @@ char __attribute__ ((noinline)) G24(Ptr pos) {
 	return ret;
 }
 
-// Switch to 32-bit mode and get
-#pragma parameter __D0 G24L(__A2)
-long __attribute__ ((noinline)) G24L(long *pos) {
-	long ret;
-	signed char mode = true32b;
-	SwapMMUMode(&mode);
-	ret = *pos; // Peek
-	SwapMMUMode(&mode);
-	return ret;
-}
-
 // Switch to 32-bit mode and set
 #pragma parameter S24(__A2, __D3)
 void __attribute__ ((noinline)) S24(Ptr pos, char patch) {
