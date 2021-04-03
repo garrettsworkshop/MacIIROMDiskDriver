@@ -275,9 +275,13 @@ OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 		case kFormat:
 			if (!c->status.diskInPlace || c->status.writeProt ||
 				!c->ramdisk) { return controlErr; } 
-			long long zero = 0;
-			if (*MMU32bit) { copy24(c->ramdisk, (Ptr)(&zero), sizeof(zero)); }
-			else { copy24(c->ramdisk, StripAddress((Ptr)(&zero)), sizeof(zero)); }
+			long long z = 0;
+			Ptr pz;
+			if (*MMU32bit) { p = (Ptr)&z; }
+			else { StripAddress((Ptr)&z); }
+			for (int i = 0; i < 4095; i++) {
+				copy24(c->ramdisk + i * sizeof(z), pz, sizeof(z));
+			}
 			return noErr;
 		case kVerify:
 			if (!c->status.diskInPlace) { return controlErr; }
