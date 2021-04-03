@@ -182,21 +182,23 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 	}
 
 	// Get debug and CD-ROM disable settings from ROM table
-	peek24L((long*)0x40851D98, c->dbgDisPos);
-	peek24L((long*)0x40851D9C, c->cdrDisPos);
+	c->dbgDisPos = *(long*)0x40851D98;
+	c->cdrDisPos = *(long*)0x40851D9C;
+	c->dbgDisByte = *(char*)0x40851DA8;
+	c->cdrDisByte = *(char*)0x40851DA9;
 	// Patch
 	if (c->dbgDisPos < RDiskSize) {
-		if (c->ramdisk && !dbgEN) { poke24(c->ramdisk + c->dbgDisPos, c->dbgDisByte); }
-		else { peek24(dbgEN ? 
-			RDiskBuf + c->dbgDisPos : 
-			(char*)0x40851DA8, c->dbgDisByte);
+		if (c->ramdisk && !dbgEN) {
+			poke24(c->ramdisk + c->dbgDisPos, c->dbgDisByte);
+		} else if (dbgEN) {
+			peek24(RDiskBuf + c->dbgDisPos, c->dbgDisByte);
 		}
 	}
-	if (c->dbgDisPos < RDiskSize) {
-		if (c->ramdisk && !cdrEN) { poke24(c->ramdisk + c->cdrDisPos, c->cdrDisByte); }
-		else { peek24(cdrEN ? 
-			RDiskBuf + c->cdrDisPos : 
-			(char*)0x40851DA9, c->cdrDisByte);
+	if (c->cdrDisPos < RDiskSize) {
+		if (c->ramdisk && !cdrEN) {
+			poke24(c->ramdisk + c->cdrDisPos, c->cdrDisByte);
+		} else if (cdrEN) {
+			peek24(RDiskBuf + c->cdrDisPos, c->cdrDisByte);
 		}
 	}
 
@@ -277,8 +279,8 @@ OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 				!c->ramdisk) { return controlErr; } 
 			long long z = 0;
 			Ptr pz;
-			if (*MMU32bit) { p = (Ptr)&z; }
-			else { StripAddress((Ptr)&z); }
+			if (*MMU32bit) { pz = (Ptr)&z; }
+			else { pz = StripAddress((Ptr)&z); }
 			for (int i = 0; i < 4095; i++) {
 				copy24(c->ramdisk + i * sizeof(z), pz, sizeof(z));
 			}
