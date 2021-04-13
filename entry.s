@@ -21,11 +21,11 @@ RDiskSig:
 RDiskDBGDisPos:
 dc.l 0x00000031
 RDiskCDRDisPos:
-dc.l 0x00012CAF
+dc.l 0x00012B5D
 RDiskDBGNameAddr:
 dc.l 0x4088002A
 RDiskCDRNameAddr:
-dc.l 0x40892C96
+dc.l 0x40892B44
 RDiskDBGDisByte:
 dc.b 0x44
 RDiskCDRDisByte:
