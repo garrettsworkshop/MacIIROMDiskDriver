@@ -15,11 +15,18 @@ static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, P
 	RDiskReadXPRAM(1, 4, &legacy_startup);
 	RDiskReadXPRAM(1, 5, &legacy_ram);
 
+	// Sample R and A keys repeatedly
+	char r = 0, a = 0;
+	for (long i = 0; i < 100000; i++) {
+		r = r | RDiskIsRPressed();
+		a = a | RDiskIsAPressed();
+	}
+
 	// Decode settings: unmount (don't boot), mount (after boot), RAM disk
-	if (RDiskIsRPressed()) { // R boots from ROM disk
+	if (r) { // R boots from ROM disk
 		*unmountEN = 0; // Don't unmount so we boot from this drive
 		*mountEN = 0; // No need to mount later since we are boot disk
-		*ramEN = RDiskIsAPressed(); // A enables RAM disk
+		*ramEN = a; // A enables RAM disk
 	} else {
 		if (legacy_startup & 0x01) { // Boot from ROM disk
 			*unmountEN = 0; // Don't unmount so we boot from this drive
