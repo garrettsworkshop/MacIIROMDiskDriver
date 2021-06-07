@@ -17,9 +17,12 @@ static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, P
 
 	// Sample R and A keys repeatedly
 	char r = 0, a = 0;
-	for (long i = 0; i < 100000; i++) {
-		r = r | RDiskIsRPressed();
-		a = a | RDiskIsAPressed();
+	long tmax = TickCount() + 60;
+	for (long i = 0; i < 1000000; i++) {
+		r |= RDiskIsRPressed();
+		a |= RDiskIsAPressed();
+		if (r && a) { break; }
+		if (TickCount() > tmax) { break; }
 	}
 
 	// Decode settings: unmount (don't boot), mount (after boot), RAM disk
