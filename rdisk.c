@@ -10,11 +10,6 @@
 
 // Decode keyboard/PRAM settings
 static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, Ptr cdrEN) {
-	// Read PRAM
-	char legacy_startup, legacy_ram;
-	RDiskReadXPRAM(1, 4, &legacy_startup);
-	RDiskReadXPRAM(1, 5, &legacy_ram);
-
 	// Sample R and A keys repeatedly
 	char r = 0, a = 0;
 	long tmax = TickCount() + 60;
@@ -25,32 +20,39 @@ static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, P
 		if (TickCount() > tmax) { break; }
 	}
 
+	// Read PRAM
+	char legacy_startup, legacy_ram;
+	RDiskReadXPRAM(1, 4, &legacy_startup);
+	RDiskReadXPRAM(1, 5, &legacy_ram);
+
 	// Decode settings: unmount (don't boot), mount (after boot), RAM disk
 	if (r) { // R boots from ROM disk
 		*unmountEN = 0; // Don't unmount so we boot from this drive
 		*mountEN = 0; // No need to mount later since we are boot disk
 		*ramEN = a; // A enables RAM disk
+		*dbgEN = 0;
+		*cdrEN = 1;
 	} else {
 		if (legacy_startup & 0x01) { // Boot from ROM disk
 			*unmountEN = 0; // Don't unmount so we boot from this drive
 			*mountEN = 0; // No need to mount later since we are boot disk
-			*ramEN = legacy_ram & 0x01;
+			*ramEN = legacy_ram & 0x01; // Allocate RAM disk if bit 0 == 1
+			*dbgEN = legacy_startup & 0x04; // MacsBug enabled if bit 2 == 1
+			*cdrEN = !(legacy_startup & 0x08); // CD-ROM enabled if bit 3 == 0
 		} else if (legacy_startup & 0x02) { // Mount ROM disk
 			*unmountEN = 1; // Unmount to not boot from our disk
 			*mountEN = 1; // Mount in accRun
-			*ramEN = legacy_ram & 0x01;
+			*ramEN = legacy_ram & 0x01; // Allocate RAM disk if bit 0 == 1
+			*dbgEN = 1; // CD-ROM ext. always enabled in mount mode
+			*cdrEN = 1; // MacsBug always enabled in mount mode
 		} else {
 			*unmountEN = 1; // Unmount
 			*mountEN = 0; // Don't mount again
 			*ramEN = 0; // Don't allocate RAM disk
+			*dbgEN = 1; // CD-ROM ext. always enabled in unmount mode
+			*cdrEN = 1; // MacsBug always enabled in unmount mode
 		}
 	}
-
-	// MacsBug enabled if bit 2 == 1 or not boot
-	*dbgEN = *unmountEN || (legacy_startup & 0x04);
-
-	// CD-ROM enabled if bit 3 == 0 or not boot
-	*cdrEN = *unmountEN || !(legacy_startup & 0x08);
 }
 
 // Switch to 32-bit mode and copy
