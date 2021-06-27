@@ -17,7 +17,6 @@ OSErr RDiskAddDrive(short drvrRefNum, short drvNum, DrvQElPtr dq) = {0x4840, 0x3
 static inline char RDiskIsRPressed() { return *((volatile char*)0x175) & 0x80; }
 static inline char RDiskIsAPressed() { return *((volatile char*)0x174) & 0x01; }
 
-//#define RDISK_COMPRESS_ICON_ENABLE
 #define RDISK_ICON_SIZE (285)
 typedef struct RDiskStorage_s {
 	DrvSts2 status;
