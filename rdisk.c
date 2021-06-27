@@ -14,9 +14,9 @@ static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, P
 	char r = 0, a = 0;
 	long tmax = TickCount() + 60;
 	for (long i = 0; i < 1000000; i++) {
-		r |= RDiskIsRPressed();
 		a |= RDiskIsAPressed();
-		if (r && a) { break; }
+		r |= RDiskIsRPressed() | a;
+		if (r) { break; }
 		if (TickCount() > tmax) { break; }
 	}
 
