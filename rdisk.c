@@ -31,15 +31,15 @@ static void RDDecodeSettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, P
 		*mountEN = 0; // No need to mount later since we are boot disk
 		*ramEN = a; // A enables RAM disk
 		*dbgEN = 0;
-		*cdrEN = 1;
+		*cdrEN = 0;
 	} else {
 		if (legacy_startup & 0x01) { // Boot from ROM disk
 			*unmountEN = 0; // Don't unmount so we boot from this drive
 			*mountEN = 0; // No need to mount later since we are boot disk
 			*ramEN = legacy_ram & 0x01; // Allocate RAM disk if bit 0 == 1
 			*dbgEN = legacy_startup & 0x04; // MacsBug enabled if bit 2 == 1
-			*cdrEN = !(legacy_startup & 0x08); // CD-ROM enabled if bit 3 == 0
-		} else if (legacy_startup & 0x02) { // Mount ROM disk
+			*cdrEN = legacy_startup & 0x08; // CD-ROM enabled if bit 3 == 1
+		} else if (!(legacy_startup & 0x02)) { // Mount ROM disk
 			*unmountEN = 1; // Unmount to not boot from our disk
 			*mountEN = 1; // Mount in accRun
 			*ramEN = legacy_ram & 0x01; // Allocate RAM disk if bit 0 == 1
