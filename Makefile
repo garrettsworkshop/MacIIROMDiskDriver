@@ -53,16 +53,6 @@ bin/rom8M.bin: bin baserom.bin RDisk7M5.dsk bin bin/driver7M5.bin obj/driver_abs
 	cat obj/entry_rel.sym | grep "DClose" | cut -c5-8 | xxd -r -p - | dd of=$@ bs=1 seek=335232 count=2 conv=notrunc
 	dd if=RDisk7M5.dsk of=$@ bs=1024 seek=512 count=7680 conv=notrunc # copy disk image
 
-bin/rom8M_swap.bin: bin bin/rom8M.bin
-	dd if=bin/rom8M.bin of=$@ conv=swab # swap bytes
-
-bin/iisi_swap.bin: bin iisi.bin
-	dd if=iisi.bin of=$@ conv=swab # swap bytes
-
-bin/rom16M_swap.bin: bin/iisi_swap.bin bin/rom8M_swap.bin
-	cat bin/rom8M_swap.bin > $@
-	cat bin/iisi_swap.bin >> $@
-
 
 .PHONY: clean
 clean:
