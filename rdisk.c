@@ -118,6 +118,10 @@ OSErr RDOpen(IOParamPtr p, DCtlPtr d) {
 	// Find first available drive number
 	drvNum = RDFindDrvNum();
 
+	// Get debug and CD-ROM disable settings from ROM table
+	c->dbgDisByte = RDiskDBGDisByte;
+	c->cdrDisByte = RDiskCDRDisByte;
+	
 	// Set drive status
 	//c->status.track = 0;
 	c->status.writeProt = -1; // nonzero is write protected
@@ -182,24 +186,19 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 		}
 	}
 
-	// Get debug and CD-ROM disable settings from ROM table
-	c->dbgDisPos = *(long*)0x40851D98;
-	c->cdrDisPos = *(long*)0x40851D9C;
-	c->dbgDisByte = *(char*)0x40851DA8;
-	c->cdrDisByte = *(char*)0x40851DA9;
 	// Patch
-	if (c->dbgDisPos < RDiskSize) {
+	if (RDiskDBGDisPos < RDiskSize) {
 		if (c->ramdisk && !dbgEN) {
-			poke24(c->ramdisk + c->dbgDisPos, c->dbgDisByte);
+			poke24(c->ramdisk + RDiskDBGDisPos, c->dbgDisByte);
 		} else if (dbgEN) {
-			peek24(RDiskBuf + c->dbgDisPos, c->dbgDisByte);
+			peek24(RDiskBuf + RDiskDBGDisPos, c->dbgDisByte);
 		}
 	}
-	if (c->cdrDisPos < RDiskSize) {
+	if (RDiskCDRDisPos < RDiskSize) {
 		if (c->ramdisk && !cdrEN) {
-			poke24(c->ramdisk + c->cdrDisPos, c->cdrDisByte);
+			poke24(c->ramdisk + RDiskCDRDisPos, c->cdrDisByte);
 		} else if (cdrEN) {
-			peek24(RDiskBuf + c->cdrDisPos, c->cdrDisByte);
+			peek24(RDiskBuf + RDiskCDRDisPos, c->cdrDisByte);
 		}
 	}
 
@@ -242,13 +241,13 @@ OSErr RDPrime(IOParamPtr p, DCtlPtr d) {
 		// Read from disk into buffer.
 		if (*MMU32bit) { BlockMove(disk, p->ioBuffer, p->ioReqCount); }
 		else { copy24(disk, StripAddress(p->ioBuffer), p->ioReqCount); }
-		if (!c->ramdisk && c->dbgDisPos >= d->dCtlPosition && 
-			c->dbgDisPos < d->dCtlPosition + p->ioReqCount) {
-			p->ioBuffer[c->dbgDisPos - d->dCtlPosition] = c->dbgDisByte;
+		if (!c->ramdisk && RDiskDBGDisPos >= d->dCtlPosition && 
+			RDiskDBGDisPos < d->dCtlPosition + p->ioReqCount) {
+			p->ioBuffer[RDiskDBGDisPos - d->dCtlPosition] = c->dbgDisByte;
 		}
-		if (!c->ramdisk && c->cdrDisPos >= d->dCtlPosition && 
-			c->cdrDisPos < d->dCtlPosition + p->ioReqCount) {
-			p->ioBuffer[c->cdrDisPos - d->dCtlPosition] = c->cdrDisByte;
+		if (!c->ramdisk && RDiskCDRDisPos >= d->dCtlPosition && 
+			RDiskCDRDisPos < d->dCtlPosition + p->ioReqCount) {
+			p->ioBuffer[RDiskCDRDisPos - d->dCtlPosition] = c->cdrDisByte;
 		}
 	} else if (cmd == aWrCmd) { // Write
 		// Fail if write protected or RAM disk buffer not set up

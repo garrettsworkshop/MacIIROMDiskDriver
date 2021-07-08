@@ -6,6 +6,12 @@
 #define MemTop ((Ptr*)0x108)
 #define MMU32bit ((char*)0xCB2)
 
+#define RDiskDBGDisPos (*(const unsigned long*)0x40851D98)
+#define RDiskCDRDisPos (*(const unsigned long*)0x40851D9C)
+#define RDiskDBGDisByte (*(const char*)0x40851DA8)
+#define RDiskCDRDisByte (*(const char*)0x40851DA9)
+#define RDiskSize (*(const unsigned long*)0x40851DAC)
+
 #define RDISK_COMPRESS_ICON_ENABLE
 
 #pragma parameter __D0 RDiskReadXPRAM(__D0, __D1, __A0)
@@ -22,8 +28,6 @@ typedef struct RDiskStorage_s {
 	DrvSts2 status;
 	char initialized;
 	Ptr ramdisk;
-	long dbgDisPos;
-	long cdrDisPos;
 	char dbgDisByte;
 	char cdrDisByte;
 	#ifdef RDISK_COMPRESS_ICON_ENABLE
