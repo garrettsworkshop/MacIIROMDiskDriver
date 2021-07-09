@@ -9,7 +9,6 @@ all: bin/IIxIIcxSE30/IIxIIcxSE30_8M.bin bin/IIci/IIci_8M.bin bin/IIfx/IIfx_8M.bi
 
 obj:
 	mkdir $@
-
 bin:
 	mkdir $@
 bin/IIsi: bin
@@ -20,7 +19,6 @@ bin/IIci: bin
 	mkdir $@
 bin/IIfx: bin
 	mkdir $@
-
 
 
 obj/entry.o: entry.s obj
