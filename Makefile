@@ -107,7 +107,7 @@ bin/GWSys7Diagnostics_8M.bin: bin bin/baserom_romdisk_ramtest.bin disks/RDisk7M5
 	printf '\xFF\xFF\xFF\xFF' | dd of=$@ bs=1 seek=335260 count=4 conv=notrunc # Patch CDR patch offset
 	printf '\x00\x00\x00\x00' | dd of=$@ bs=1 seek=335268 count=4 conv=notrunc # Patch CDR name address
 	printf '\x44' | dd of=$@ bs=1 seek=335273 count=1 conv=notrunc # Patch CDR disable byte
-	printf '\x00\x8\x00\x00' | dd of=$@ bs=1 seek=335276 count=4 conv=notrunc # Patch ROM disk size
+	printf '\x00\x78\x00\x00' | dd of=$@ bs=1 seek=335276 count=4 conv=notrunc # Patch ROM disk size
 	# Copy ROM disk image
 	dd if=disks/RDisk7M5-diagnostics.dsk of=$@ bs=1024 seek=512 conv=notrunc
 	# Compute checksum
