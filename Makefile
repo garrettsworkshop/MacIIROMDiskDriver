@@ -5,7 +5,7 @@ LD=$(PREFIX)-ld
 OBJCOPY=$(PREFIX)-objcopy
 OBJDUMP=$(PREFIX)-objdump
 
-all: bin/IIxIIcxSE30/IIxIIcxSE30_8M.bin bin/IIci/IIci_8M.bin bin/IIfx/IIfx_8M.bin bin/IIsi/IIsi_8M.bin bin/GWSys71_8M.bin bin/GWSys6_8M.bin bin/GWSys6T_2M.bin obj/rdisk.s obj/driver.s obj/driver_abs.sym
+all: bin/IIxIIcxSE30/IIxIIcxSE30_8M.bin bin/IIci/IIci_8M.bin bin/IIfx/IIfx_8M.bin bin/IIsi/IIsi_8M.bin bin/GWSys71_8M.bin bin/GWSys6_8M.bin bin/GWSys7Diagnostics_8M.bin obj/rdisk.s obj/driver.s obj/driver_abs.sym
 
 obj:
 	mkdir $@
@@ -100,16 +100,16 @@ bin/GWSys6_8M.bin: bin/GWSys6_4M.bin
 	cat bin/GWSys6_4M.bin >> $@
 
 
-bin/GWSys6T_2M.bin: bin bin/baserom_romdisk_ramtest.bin disks/RDisk1M5.dsk
+bin/GWSys7Diagnostics_8M.bin: bin bin/baserom_romdisk_ramtest.bin disks/RDisk7M5-diagnostics.dsk
 	# Copy base rom with ROM disk driver
 	cp bin/baserom_romdisk_ramtest.bin $@
 	# Patch ROM disk driver parameter table
 	printf '\xFF\xFF\xFF\xFF' | dd of=$@ bs=1 seek=335260 count=4 conv=notrunc # Patch CDR patch offset
 	printf '\x00\x00\x00\x00' | dd of=$@ bs=1 seek=335268 count=4 conv=notrunc # Patch CDR name address
 	printf '\x44' | dd of=$@ bs=1 seek=335273 count=1 conv=notrunc # Patch CDR disable byte
-	printf '\x00\x18\x00\x00' | dd of=$@ bs=1 seek=335276 count=4 conv=notrunc # Patch ROM disk size
+	printf '\x00\x8\x00\x00' | dd of=$@ bs=1 seek=335276 count=4 conv=notrunc # Patch ROM disk size
 	# Copy ROM disk image
-	dd if=disks/RDisk1M5.dsk of=$@ bs=1024 seek=512 conv=notrunc
+	dd if=disks/RDisk7M5-diagnostics.dsk of=$@ bs=1024 seek=512 conv=notrunc
 	# Compute checksum
 	#python checksum.py $@ | cut -c3-10 | xxd -r -p - | dd of=$@ bs=1 seek=0 count=4 conv=notrunc
 	printf '\x36\x9D\x3E\x51' | dd of=$@ bs=1 seek=0 count=4 conv=notrunc # Insert fake checksum (BMoW)
