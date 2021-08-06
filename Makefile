@@ -76,9 +76,6 @@ bin/GWSys71_8M.bin: bin bin/baserom_romdisk_noramtest.bin disks/RDisk7M5.dsk
 	printf '\x00\x78\x00\x00' | dd of=$@ bs=1 seek=335276 count=4 conv=notrunc # Patch ROM disk size
 	# Copy ROM disk image
 	dd if=disks/RDisk7M5.dsk of=$@ bs=1024 seek=512 conv=notrunc
-	# Compute checksum
-	#python checksum.py $@ | cut -c3-10 | xxd -r -p - | dd of=$@ bs=1 seek=0 count=4 conv=notrunc
-	printf '\x36\x9D\x3E\x51' | dd of=$@ bs=1 seek=0 count=4 conv=notrunc # Insert fake checksum (BMoW)
 
 
 bin/GWSys6_4M.bin: bin bin/baserom_romdisk_noramtest.bin disks/RDisk3M5.dsk
@@ -91,9 +88,6 @@ bin/GWSys6_4M.bin: bin bin/baserom_romdisk_noramtest.bin disks/RDisk3M5.dsk
 	printf '\x00\x38\x00\x00' | dd of=$@ bs=1 seek=335276 count=4 conv=notrunc # Patch ROM disk size
 	# Copy ROM disk image
 	dd if=disks/RDisk3M5.dsk of=$@ bs=1024 seek=512 conv=notrunc
-	# Compute checksum
-	#python checksum.py $@ | cut -c3-10 | xxd -r -p - | dd of=$@ bs=1 seek=0 count=4 conv=notrunc
-	printf '\x36\x9D\x3E\x51' | dd of=$@ bs=1 seek=0 count=4 conv=notrunc # Insert fake checksum (BMoW)
 
 bin/GWSys6_8M.bin: bin/GWSys6_4M.bin
 	cat bin/GWSys6_4M.bin  > $@
@@ -110,9 +104,6 @@ bin/GWSys7Diagnostics_8M.bin: bin bin/baserom_romdisk_ramtest.bin disks/RDisk7M5
 	printf '\x00\x78\x00\x00' | dd of=$@ bs=1 seek=335276 count=4 conv=notrunc # Patch ROM disk size
 	# Copy ROM disk image
 	dd if=disks/RDisk7M5-diagnostics.dsk of=$@ bs=1024 seek=512 conv=notrunc
-	# Compute checksum
-	#python checksum.py $@ | cut -c3-10 | xxd -r -p - | dd of=$@ bs=1 seek=0 count=4 conv=notrunc
-	printf '\x36\x9D\x3E\x51' | dd of=$@ bs=1 seek=0 count=4 conv=notrunc # Insert fake checksum (BMoW)
 
 
 bin/IIxIIcxSE30/IIxIIcxSE30_512k.bin: bin/IIxIIcxSE30 roms/IIxIIcxSE30.bin
