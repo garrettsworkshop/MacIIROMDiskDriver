@@ -71,8 +71,8 @@ bin/GWSys71_8M.bin: bin bin/baserom_romdisk_noramtest.bin disks/RDisk7M5.dsk
 	cp bin/baserom_romdisk_noramtest.bin $@
 	# Patch ROM disk driver parameter table
 	#0x1 4E E1
-	printf '\x00\x01\x4E\xE1' | dd of=$@ bs=1 seek=335264 count=4 conv=notrunc # Patch MacsBug patch offset
-	printf '\x40\x89\x4E\xDA' | dd of=$@ bs=1 seek=335256 count=4 conv=notrunc # Patch MacsBug name address
+	printf '\x00\x01\x4E\xE1' | dd of=$@ bs=1 seek=335256 count=4 conv=notrunc # Patch MacsBug patch offset
+	printf '\x40\x89\x4E\xDA' | dd of=$@ bs=1 seek=335264 count=4 conv=notrunc # Patch MacsBug name address
 	printf '\x64' | dd of=$@ bs=1 seek=335272 count=1 conv=notrunc # Patch MacsBug disable byte
 	printf '\x00\x01\x2A\x29' | dd of=$@ bs=1 seek=335260 count=4 conv=notrunc # Patch CDR patch offset
 	printf '\x40\x89\x2A\x14' | dd of=$@ bs=1 seek=335268 count=4 conv=notrunc # Patch CDR name address
