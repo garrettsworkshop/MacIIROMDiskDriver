@@ -207,7 +207,7 @@ static void RDInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 
 	// If mount enabled, enable accRun to post disk inserted event later
 	if (mountEN) { 
-		d->dCtlDelay = 150; // Set accRun delay (150 ticks is 2.5 sec.)
+		d->dCtlDelay = 600; // Set accRun delay (600 ticks is 10 sec.)
 		d->dCtlFlags |= dNeedTimeMask; // Enable accRun
 	}
 }
