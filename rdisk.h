@@ -26,10 +26,20 @@ static inline char IsRPressed() { return *((volatile char*)0x175) & 0x80; }
 #define RDISK_ICON_SIZE (285)
 typedef struct RDiskStorage_s {
 	DrvSts2 status;
+
 	char initialized;
+
+	char unmountEN;
+	char mountEN;
+	char ramEN;
+	char dbgEN;
+	char cdrEN;
+	
 	Ptr ramdisk;
+
 	char dbgDisByte;
 	char cdrDisByte;
+
 	#ifdef RDISK_COMPRESS_ICON_ENABLE
 	char icon[RDISK_ICON_SIZE+8];
 	#endif
@@ -37,12 +47,6 @@ typedef struct RDiskStorage_s {
 
 typedef void (*RDiskCopy_t)(Ptr, Ptr, unsigned long);
 #define copy24(s, d, b) { RDiskCopy_t f = C24; f(s, d, b); }
-
-typedef char (*RDiskPeek_t)(Ptr);
-#define peek24(a, d) { RDiskPeek_t f = G24; d = f(a); }
-
-typedef void (*RDiskPoke_t)(Ptr, char);
-#define poke24(a, d) { RDiskPoke_t f = S24; f(a, d); }
 
 #define PackBits_Repeat(count) (-1 * (count - 1))
 #define PackBits_Literal(count) (count - 1)

@@ -9,7 +9,7 @@
 #include "rdisk.h"
 
 // Decode keyboard settings
-static void RDDecodeKeySettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, Ptr cdrEN) {
+static void RDDecodeKeySettings(RDiskStorage_t *c) {
 	// Sample R and A keys repeatedly
 	char r = 0, a = 0;
 	long tmax = TickCount() + 60;
@@ -22,16 +22,16 @@ static void RDDecodeKeySettings(Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN
 
 	// Decode settings: unmount (don't boot), mount (after boot), RAM disk
 	if (r || a) { // R/A boots from ROM disk
-		*unmountEN = 0; // Don't unmount so we boot from this drive
-		*mountEN = 0; // No need to mount later since we are boot disk
-		*ramEN = a; // A enables RAM disk
-		*dbgEN = 0;
-		*cdrEN = 0;
+		c->unmountEN = 0; // Don't unmount so we boot from this drive
+		c->mountEN = 0; // No need to mount later since we are boot disk
+		c->ramEN = a; // A enables RAM disk
+		c->dbgEN = 0;
+		c->cdrEN = 0;
 	}
 }
 
 // Decode PRAM settings
-static void RDDecodePRAMSettings(Ptr inhibitEN, Ptr unmountEN, Ptr mountEN, Ptr ramEN, Ptr dbgEN, Ptr cdrEN) {
+static OSErr RDDecodePRAMSettings(RDiskStorage_t *c) {
 	// Read PRAM
 	char legacy_startup, legacy_ram;
 	RDReadXPRAM(1, 4, &legacy_startup);
@@ -40,29 +40,27 @@ static void RDDecodePRAMSettings(Ptr inhibitEN, Ptr unmountEN, Ptr mountEN, Ptr 
 	// Decode settings based on PRAM values:
 	// unmount (don't boot), mount (after boot), RAM disk
 	if (legacy_startup & 0x80) {
-		*inhibitEN = 1;
+		return -1;
 	} else if (legacy_startup & 0x01) { // Boot from ROM disk
-		*inhibitEN = 0; // Don't inhibit
-		*unmountEN = 0; // Don't unmount so we boot from this drive
-		*mountEN = 0; // No need to mount later since we are boot disk
-		*ramEN = legacy_ram & 0x01; // Allocate RAM disk if bit 0 == 1
-		*dbgEN = legacy_startup & 0x04; // MacsBug enabled if bit 2 == 1
-		*cdrEN = legacy_startup & 0x08; // CD-ROM enabled if bit 3 == 1
-	} else if (!(legacy_startup & 0x02)) { // Mount ROM diskk
-		*inhibitEN = 0; // Don't inhibit
-		*unmountEN = 1; // Unmount to not boot from our disk
-		*mountEN = 1; // Mount in accRun
-		*ramEN = legacy_ram & 0x01; // Allocate RAM disk if bit 0 == 1
-		*dbgEN = 1; // CD-ROM ext. always enabled in mount mode
-		*cdrEN = 1; // MacsBug always enabled in mount mode
+		c->unmountEN = 0; // Don't unmount so we boot from this drive
+		c->mountEN = 0; // No need to mount later since we are boot disk
+		c->ramEN = legacy_ram & 0x01; // Allocate RAM disk if bit 0 == 1
+		c->dbgEN = legacy_startup & 0x04; // MacsBug enabled if bit 2 == 1
+		c->cdrEN = legacy_startup & 0x08; // CD-ROM enabled if bit 3 == 1
+	} else if (!(legacy_startup & 0x02)) { // Mount ROM disk
+		c->unmountEN = 1; // Unmount to not boot from our disk
+		c->mountEN = 1; // Mount in accRun
+		c->ramEN = legacy_ram & 0x01; // Allocate RAM disk if bit 0 == 1
+		c->dbgEN = 1; // CD-ROM ext. always enabled in mount mode
+		c->cdrEN = 1; // MacsBug always enabled in mount mode
 	} else {
-		*inhibitEN = 0; // Don't inhibit
-		*unmountEN = 1; // Unmount
-		*mountEN = 0; // Don't mount again
-		*ramEN = 0; // Don't allocate RAM disk
-		*dbgEN = 1; // CD-ROM ext. always enabled in unmount mode
-		*cdrEN = 1; // MacsBug always enabled in unmount mode
+		c->unmountEN = 1; // Unmount
+		c->mountEN = 0; // Don't mount again
+		c->ramEN = 0; // Don't allocate RAM disk
+		c->dbgEN = 1; // CD-ROM ext. always enabled in unmount mode
+		c->cdrEN = 1; // MacsBug always enabled in unmount mode
 	}
+	return noErr;
 }
 
 // Switch to 32-bit mode and copy
@@ -104,33 +102,44 @@ static int RDFindDrvNum() {
 	return drvNum;
 }
 
+#pragma parameter __D0 RDClose(__A0, __A1)
+OSErr RDClose(IOParamPtr p, DCtlPtr d) {
+	// If dCtlStorage not null, dispose of it
+	if (!d->dCtlStorage) { return noErr; }
+	HUnlock(d->dCtlStorage);
+	DisposeHandle(d->dCtlStorage);
+	d->dCtlStorage = NULL;
+	return noErr;
+}
+
 #pragma parameter __D0 RDOpen(__A0, __A1)
 OSErr RDOpen(IOParamPtr p, DCtlPtr d) {
 	int drvNum;
 	RDiskStorage_t *c;
-	char inhibitEN, unmountEN, mountEN, ramEN, dbgEN, cdrEN;
 
 	// Do nothing if already opened
 	if (d->dCtlStorage) { return noErr; }
-
-	// Do nothing if inhibited
-	RDDecodePRAMSettings(&inhibitEN, &unmountEN, &mountEN, &ramEN, &dbgEN, &cdrEN);
-	if (inhibitEN) { return openErr; }
-
-	// Iff mount enabled, enable accRun to post disk inserted event later
-	if (mountEN) { d->dCtlFlags |= dNeedTimeMask; }
-	else { d->dCtlFlags &= ~dNeedTimeMask; }
 
 	// Allocate storage struct
 	d->dCtlStorage = NewHandleSysClear(sizeof(RDiskStorage_t));
 	if (!d->dCtlStorage) { return openErr; }
 
-	// Set accRun delay
-	d->dCtlDelay = 150; // (150 ticks is 2.5 sec.)
-
 	// Lock our storage struct and get master pointer
 	HLock(d->dCtlStorage);
 	c = *(RDiskStorage_t**)d->dCtlStorage;
+
+	// Do nothing if inhibited
+	if (RDDecodePRAMSettings(c) != noErr) {
+		RDClose(p, d);
+		return openErr;
+	}
+
+	// Iff mount enabled, enable accRun to post disk inserted event later
+	if (c->mountEN) { d->dCtlFlags |= dNeedTimeMask; }
+	else { d->dCtlFlags &= ~dNeedTimeMask; }
+
+	// Set accRun delay
+	d->dCtlDelay = 150; // (150 ticks is 2.5 sec.)
 
 	// Find first available drive number
 	drvNum = RDFindDrvNum();
@@ -164,17 +173,29 @@ OSErr RDOpen(IOParamPtr p, DCtlPtr d) {
 	return noErr;
 }
 
+static void RDPatchRAMDisk(char enable, Ptr ram, Ptr rom,
+	unsigned long pos, unsigned long size, Ptr patch) {
+	if (pos < size) {
+		if (enable) { 
+			void (*poke)(Ptr, char) = S24;
+			poke(ram + pos, *patch);
+		} else {
+			char (*peek)(Ptr) = G24;
+			*patch = peek(rom + pos);
+		}
+	}
+}
+
 // Init is called at beginning of first prime (read/write) call
 static void RDBootInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
-	char inhibitEN, unmountEN, mountEN, ramEN, dbgEN, cdrEN;
 	// Mark init done
 	c->initialized = 1;
+
 	// Decode key settings
-	RDDecodePRAMSettings(&inhibitEN, &unmountEN, &mountEN, &ramEN, &dbgEN, &cdrEN);
-	RDDecodeKeySettings(&unmountEN, &mountEN, &ramEN, &dbgEN, &cdrEN);
+	RDDecodeKeySettings(c);
 	
 	// If RAM disk enabled, try to allocate RAM disk buffer if not already
-	if (ramEN & !c->ramdisk) {
+	if (c->ramEN) {
 		if (*MMU32bit) { // 32-bit mode
 			unsigned long minBufPtr, newBufPtr;
 			// Compute if there is enough high memory
@@ -185,53 +206,35 @@ static void RDBootInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 				*BufPtr = (Ptr)newBufPtr;
 				// Set RAM disk buffer pointer.
 				c->ramdisk = *BufPtr;
-				// Copy ROM disk image to RAM disk
-				BlockMove(RDiskBuf, c->ramdisk, RDiskSize);
-				// Clearing write protect marks RAM disk enabled
-				c->status.writeProt = 0;
 			}
 		} else { // 24-bit mode
 			// Put RAM disk just past 8MB
 			c->ramdisk = (Ptr)(8 * 1024 * 1024);
-			// Copy ROM disk image to RAM disk
 			//FIXME: what if we don't have enough RAM? 
 			// Will this wrap around and overwrite low memory?
 			// That's not the worst, since the system would just crash,
 			// but it would be better to switch to read-only status
-			copy24(RDiskBuf, c->ramdisk, RDiskSize);
-			// Clearing write protect marks RAM disk enableds
-			c->status.writeProt = 0;
 		}
 	}
 
-	// Patch
-	if (RDiskDBGDisPos < RDiskSize) {
-		if (c->ramdisk && !dbgEN) {
-			poke24(c->ramdisk + RDiskDBGDisPos, c->dbgDisByte);
-		} else if (dbgEN) {
-			peek24(RDiskBuf + RDiskDBGDisPos, c->dbgDisByte);
-		}
-	}
-	if (RDiskCDRDisPos < RDiskSize) {
-		if (c->ramdisk && !cdrEN) {
-			poke24(c->ramdisk + RDiskCDRDisPos, c->cdrDisByte);
-		} else if (cdrEN) {
-			peek24(RDiskBuf + RDiskCDRDisPos, c->cdrDisByte);
-		}
+	if (c->ramdisk) {
+		// Copy ROM disk image to RAM disk
+		copy24(RDiskBuf, c->ramdisk, RDiskSize);
+		// Clearing write protect marks RAM disk enabled
+		c->status.writeProt = 0;
+		// Patch debug
+		RDPatchRAMDisk(!c->dbgEN, c->ramdisk, RDiskBuf, 
+			RDiskDBGDisPos, RDiskSize, &c->dbgDisByte);
+		// Patch CD
+		RDPatchRAMDisk(!c->cdrEN, c->ramdisk, RDiskBuf, 
+			RDiskCDRDisPos, RDiskSize, &c->cdrDisByte);
 	}
 
 	// Unmount if not booting from ROM disk
-	if (unmountEN) { c->status.diskInPlace = 0; }
+	if (c->unmountEN) { c->status.diskInPlace = 0; }
 
-	// Iff mount enabled, enable accRun to post disk inserted event later
-	if (mountEN) { d->dCtlFlags |= dNeedTimeMask; }
-	else { d->dCtlFlags &= ~dNeedTimeMask; }
-}
-
-static void RDFinderInit(CntrlParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
-	// Mark init done
-	c->initialized = 1;
-	c->status.diskInPlace = 8; // 8 is nonejectable disk
+	// Iff mount disabled, disable accRun
+	if (!c->mountEN) { d->dCtlFlags &= ~dNeedTimeMask; }
 }
 
 #pragma parameter __D0 RDPrime(__A0, __A1)
@@ -308,14 +311,12 @@ OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 		case kVerify:
 			if (!c->status.diskInPlace) { return controlErr; }
 			return noErr;
-		case kEject:
-			// "Reinsert" disk if ejected illegally
-			if (c->status.diskInPlace) { 
-				PostEvent(diskEvt, c->status.dQDrive);
-			}
-			return controlErr; // Eject not allowed so return error
 		case accRun:
-			if (!c->initialized) { RDFinderInit(p, d, c); }
+			if (!c->initialized) { 
+				// Mark init done
+				c->initialized = 1;
+				c->status.diskInPlace = 8; // 8 is nonejectable disk
+			}
 			PostEvent(diskEvt, c->status.dQDrive); // Post disk inserted event
 			d->dCtlFlags &= ~dNeedTimeMask; // Disable accRun
 			return noErr;
@@ -333,23 +334,24 @@ OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 			if (c->status.writeProt) { *(long*)p->csParam = 0x00000411; }
 			else { *(long*)p->csParam = 0x00000410; }
 			return noErr;
-		case 2351: // Post-boot
-			d->dCtlFlags |= dNeedTimeMask; // Enable accRun
 		case 24: // Return SCSI partition size
 			*(long*)p->csParam = RDiskSize / 512;
-		case killCode:
 			return noErr;
+		case killCode: return noErr;
+		case kEject:
+			// "Reinsert" disk if ejected illegally
+			if (c->status.diskInPlace) { 
+				PostEvent(diskEvt, c->status.dQDrive);
+			}
+			return controlErr; // Eject not allowed so return error
 		default: return controlErr;
 	}
 }
 
 #pragma parameter __D0 RDStat(__A0, __A1)
 OSErr RDStat(CntrlParamPtr p, DCtlPtr d) {
-	//RDiskStorage_t *c;
 	// Fail if dCtlStorage null
 	if (!d->dCtlStorage) { return notOpenErr; }
-	// Dereference dCtlStorage to get pointer to our context
-	//c = *(RDiskStorage_t**)d->dCtlStorage;
 	// Handle status request based on csCode
 	switch (p->csCode) {
 		case kDriveStatus:
@@ -357,15 +359,4 @@ OSErr RDStat(CntrlParamPtr p, DCtlPtr d) {
 			return noErr;
 		default: return statusErr;
 	}
-}
-
-#pragma parameter __D0 RDClose(__A0, __A1)
-OSErr RDClose(IOParamPtr p, DCtlPtr d) {
-	// If dCtlStorage not null, dispose of it
-	if (!d->dCtlStorage) { return noErr; }
-	//RDiskStorage_t *c = *(RDiskStorage_t**)d->dCtlStorage;
-	HUnlock(d->dCtlStorage);
-	DisposeHandle(d->dCtlStorage);
-	d->dCtlStorage = NULL;
-	return noErr;
 }
