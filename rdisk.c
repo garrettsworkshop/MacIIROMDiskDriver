@@ -312,11 +312,8 @@ OSErr RDCtl(CntrlParamPtr p, DCtlPtr d) {
 			if (!c->status.diskInPlace) { return controlErr; }
 			return noErr;
 		case accRun:
-			if (!c->initialized) { 
-				// Mark init done
-				c->initialized = 1;
-				c->status.diskInPlace = 8; // 8 is nonejectable disk
-			}
+			c->initialized = 1; // Mark init done
+			c->status.diskInPlace = 8; // 8 is nonejectable disk
 			PostEvent(diskEvt, c->status.dQDrive); // Post disk inserted event
 			d->dCtlFlags &= ~dNeedTimeMask; // Disable accRun
 			return noErr;
