@@ -92,6 +92,21 @@ void __attribute__ ((noinline)) S24(Ptr pos, char patch) {
 	SwapMMUMode(&mode);
 }
 
+static void RDUnpatch(unsigned long pos, Ptr patch) {
+	char (*peek)(Ptr) = G24;
+	*patch = peek(RDiskBuf + pos);
+}
+
+static void RDPatch(char enable, Ptr patch, Ptr ramdisk, unsigned long pos, char data) {
+	if (!enable) {
+		*patch = data;
+		if (ramdisk) {
+			void (*poke)(Ptr, char) = S24;
+			poke(ramdisk + pos, data);
+		}
+	}
+}
+
 // Figure out the first available drive number >= 5
 static int RDFindDrvNum() {
 	DrvQElPtr dq;
@@ -144,9 +159,9 @@ OSErr RDOpen(IOParamPtr p, DCtlPtr d) {
 	// Find first available drive number
 	drvNum = RDFindDrvNum();
 
-	// Get debug and CD-ROM disable settings from ROM table
-	c->dbgDisByte = RDiskDBGDisByte;
-	c->cdrDisByte = RDiskCDRDisByte;
+	// Enable debugger and CD-ROM
+	RDUnpatch(RDiskDBGDisPos, &c->dbgDisByte);
+	RDUnpatch(RDiskCDRDisPos, &c->cdrDisByte);
 	
 	// Set drive status
 	//c->status.track = 0;
@@ -171,19 +186,6 @@ OSErr RDOpen(IOParamPtr p, DCtlPtr d) {
 	// Add drive to drive queue and return
 	RDiskAddDrive(c->status.dQRefNum, drvNum, (DrvQElPtr)&c->status.qLink);
 	return noErr;
-}
-
-static void RDPatchRAMDisk(char enable, Ptr ram, Ptr rom,
-	unsigned long pos, unsigned long size, Ptr patch) {
-	if (pos < size) {
-		if (enable) { 
-			void (*poke)(Ptr, char) = S24;
-			poke(ram + pos, *patch);
-		} else {
-			char (*peek)(Ptr) = G24;
-			*patch = peek(rom + pos);
-		}
-	}
 }
 
 // Init is called at beginning of first prime (read/write) call
@@ -216,19 +218,12 @@ static void RDBootInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			// but it would be better to switch to read-only status
 		}
 	}
+	// Copy ROM disk image to RAM disk
+	if (c->ramdisk) { copy24(RDiskBuf, c->ramdisk, RDiskSize); }
 
-	if (c->ramdisk) {
-		// Copy ROM disk image to RAM disk
-		copy24(RDiskBuf, c->ramdisk, RDiskSize);
-		// Clearing write protect marks RAM disk enabled
-		c->status.writeProt = 0;
-		// Patch debug
-		RDPatchRAMDisk(!c->dbgEN, c->ramdisk, RDiskBuf, 
-			RDiskDBGDisPos, RDiskSize, &c->dbgDisByte);
-		// Patch CD
-		RDPatchRAMDisk(!c->cdrEN, c->ramdisk, RDiskBuf, 
-			RDiskCDRDisPos, RDiskSize, &c->cdrDisByte);
-	}
+	// Patch to disable debugger and CD-ROM
+	RDPatch(c->dbgEN, &c->dbgDisByte, c->ramdisk, RDiskDBGDisPos, RDiskDBGDisByte);
+	RDPatch(c->cdrEN, &c->cdrDisByte, c->ramdisk, RDiskCDRDisPos, RDiskCDRDisByte);
 
 	// Unmount if not booting from ROM disk
 	if (c->unmountEN) { c->status.diskInPlace = 0; }
