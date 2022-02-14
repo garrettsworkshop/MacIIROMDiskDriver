@@ -217,6 +217,7 @@ static void RDBootInit(IOParamPtr p, DCtlPtr d, RDiskStorage_t *c) {
 			// That's not the worst, since the system would just crash,
 			// but it would be better to switch to read-only status
 		}
+		c->status.writeProt = 0; // zero is writable
 	}
 	// Copy ROM disk image to RAM disk
 	if (c->ramdisk) { copy24(RDiskBuf, c->ramdisk, RDiskSize); }
