@@ -8,17 +8,17 @@ OBJDUMP=$(PREFIX)-objdump
 all: bin/IIxIIcxSE30/IIxIIcxSE30_8M.bin bin/IIci/IIci_8M.bin bin/IIfx/IIfx_8M.bin bin/IIsi/IIsi_8M.bin bin/GWSys71_8M.bin bin/GWSys6_8M.bin bin/GWSys7Diagnostics_8M.bin obj/rdisk.s obj/driver.s obj/driver_abs.sym
 
 obj:
-	mkdir $@
+	mkdir -p $@
 bin:
-	mkdir $@
+	mkdir -p $@
 bin/IIsi: bin
-	mkdir $@
+	mkdir -p $@
 bin/IIxIIcxSE30: bin
-	mkdir $@
+	mkdir -p $@
 bin/IIci: bin
-	mkdir $@
+	mkdir -p $@
 bin/IIfx: bin
-	mkdir $@
+	mkdir -p $@
 
 
 obj/entry.o: entry.s obj
