@@ -3,3 +3,5 @@ obj/
 RDiskCP/RDiskCP.rsrc
 RDiskCP/GW ROM Disk
 RDiskCP/RDiskCP
+.vscode/settings.json
+.vscode/c_cpp_properties.json
