@@ -7,6 +7,7 @@
 #include <OSUtils.h>
 
 #include "rdisk.h"
+#include "rdisk_syscall.h"
 
 // Decode keyboard settings
 static void RDDecodeKeySettings(RDiskStorage_t *c) {
